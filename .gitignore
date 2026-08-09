@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Generated media (keep the folder structure via .gitkeep)
+output/
+!output/
+!output/videos/
+!output/audio/
+!output/temporary/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Remotion bundle cache
+.remotion/

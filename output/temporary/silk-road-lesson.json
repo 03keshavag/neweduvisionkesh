@@ -1,0 +1,38 @@
+{
+  "lesson": {
+    "title": "The Silk Road - Connecting Cultures",
+    "topic": "Silk Road",
+    "language": "English",
+    "ageGroup": "13-18",
+    "estimatedDuration": 20,
+    "learningObjectives": ["Explain why the Silk Road mattered", "Name goods that travelled along it"],
+    "scenes": [
+      {
+        "id": 1,
+        "type": "intro",
+        "duration": 6,
+        "narration": "The Silk Road was a network of trade routes that connected East and West for over 1,500 years.",
+        "onScreenText": ["The Silk Road", "Trade Routes of the Ancient World"],
+        "visualDescription": "Map of Asia with glowing trade routes connecting cities."
+      },
+      {
+        "id": 2,
+        "type": "content",
+        "duration": 8,
+        "narration": "Silk, spices and paper travelled west, while glass and gold travelled east. Ideas and cultures travelled too.",
+        "onScreenText": ["Why it mattered", "Goods flowed both ways", "Ideas and culture travelled too"],
+        "visualDescription": "Animated caravan crossing a desert map with arrows."
+      },
+      {
+        "id": 3,
+        "type": "summary",
+        "duration": 6,
+        "narration": "The Silk Road shaped world history by connecting distant civilisations.",
+        "onScreenText": ["A bridge between cultures"],
+        "visualDescription": "Two hands meeting over a globe."
+      }
+    ],
+    "quiz": [],
+    "sources": []
+  }
+}

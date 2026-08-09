@@ -1,0 +1,223 @@
+:root {
+  --bg: #0d1b2a;
+  --bg-deep: #08111f;
+  --card: rgba(22, 34, 52, 0.9);
+  --text: #f5f8fc;
+  --muted: #aab8cc;
+  --primary: #f4a300;
+  --secondary: #38b6ff;
+  --success: #3ddc97;
+  --danger: #ff6b6b;
+  --border: rgba(255, 255, 255, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Segoe UI', 'Noto Sans', system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(900px 600px at 80% -10%, rgba(56, 182, 255, 0.18), transparent 60%),
+    radial-gradient(800px 500px at -10% 110%, rgba(244, 163, 0, 0.14), transparent 60%),
+    linear-gradient(160deg, var(--bg-deep), var(--bg));
+}
+
+.wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 42px;
+  letter-spacing: -0.5px;
+  color: var(--primary);
+}
+.brand .tagline {
+  margin: 6px 0 26px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px;
+  margin-bottom: 20px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.field {
+  display: block;
+  margin-bottom: 18px;
+}
+.field span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+input,
+select {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  color: var(--text);
+  background: rgba(8, 17, 31, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.field-error {
+  display: block;
+  color: var(--danger);
+  margin-top: 6px;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111;
+  background: linear-gradient(90deg, var(--secondary), var(--primary));
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+button.ghost {
+  margin-top: 18px;
+  background: transparent;
+  color: var(--secondary);
+  border: 1px solid var(--border);
+}
+
+/* Progress steps */
+.steps {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+}
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  color: var(--muted);
+}
+.steps li .tick {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex: none;
+}
+.steps li.done {
+  color: var(--success);
+}
+.steps li.done .tick {
+  border-color: var(--success);
+  color: var(--success);
+}
+.steps li.active {
+  color: var(--text);
+}
+.steps li.active .tick {
+  border-color: var(--primary);
+  color: var(--primary);
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.bar-track {
+  height: 12px;
+  border-radius: 8px;
+  background: rgba(8, 17, 31, 0.8);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--secondary), var(--primary));
+  transition: width 0.3s ease;
+}
+.status-line {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+.time-info {
+  font-variant-numeric: tabular-nums;
+  color: var(--secondary);
+}
+
+/* Result */
+.result-head h2 {
+  margin: 0 0 6px;
+}
+.result-head .meta {
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+.player video {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+  border: 1px solid var(--border);
+}
+
+/* Error */
+.error-card h2 {
+  margin: 0 0 10px;
+  color: var(--danger);
+}
+.error-card #error-message {
+  color: var(--text);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.error-card .hint {
+  color: var(--muted);
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}

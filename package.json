@@ -1,0 +1,49 @@
+{
+  "name": "eduvision-video-generator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EduVision - AI-powered multilingual cultural learning video generator (Keshava: AI + Video Generation module).",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts",
+    "render:verification": "remotion render src/index.ts LessonVideo output/videos/verification.mp4",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "dev": "remotion studio src/index.ts",
+    "test:lesson": "tsx src/groq/testLesson.ts",
+    "serve": "tsx src/server/server.ts"
+  },
+  "keywords": [
+    "eduvision",
+    "remotion",
+    "video-generation",
+    "education",
+    "typescript"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@remotion/bundler": "^4.0.507",
+    "@remotion/media-utils": "^4.0.507",
+    "@remotion/renderer": "^4.0.507",
+    "dotenv": "^17.4.2",
+    "express": "^4.22.2",
+    "groq-sdk": "^1.5.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "remotion": "^4.0.507",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.507",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsx": "^4.23.11",
+    "typescript": "~5.9.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}

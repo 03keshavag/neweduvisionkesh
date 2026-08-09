@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduVision — Learn anything in your language</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="brand">
+        <h1>EduVision</h1>
+        <p class="tagline">Learn anything in your language.</p>
+      </header>
+
+      <!-- GENERATE FORM -->
+      <section id="form-card" class="card">
+        <form id="generate-form" novalidate>
+          <label class="field">
+            <span>Topic</span>
+            <input
+              id="topic"
+              type="text"
+              placeholder="e.g. Mysuru Dasara"
+              autocomplete="off"
+            />
+            <small class="field-error" id="topic-error" hidden>
+              Please enter a topic.
+            </small>
+          </label>
+
+          <div class="row">
+            <label class="field">
+              <span>Language</span>
+              <select id="language">
+                <option value="Kannada" selected>Kannada</option>
+                <option value="Hindi">Hindi</option>
+                <option value="English">English</option>
+                <option value="Tamil">Tamil</option>
+                <option value="Telugu">Telugu</option>
+                <option value="Malayalam">Malayalam</option>
+                <option value="Bengali">Bengali</option>
+                <option value="Marathi">Marathi</option>
+                <option value="Gujarati">Gujarati</option>
+                <option value="Punjabi">Punjabi</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Age Group</span>
+              <select id="age-group">
+                <option value="8-12">8 – 12</option>
+                <option value="13-18" selected>13 – 18</option>
+                <option value="18+">18+</option>
+              </select>
+            </label>
+          </div>
+
+          <button id="generate-btn" type="submit">Generate Lesson</button>
+        </form>
+      </section>
+
+      <!-- LOADING / PROGRESS -->
+      <section id="progress-card" class="card" hidden>
+        <ol id="progress-steps" class="steps"></ol>
+        <div class="bar-track" id="bar-track" hidden>
+          <div class="bar-fill" id="bar-fill"></div>
+        </div>
+        <p class="status-line" id="status-line">Starting…</p>
+        <p class="status-line time-info" id="time-info"></p>
+      </section>
+
+      <!-- ERROR -->
+      <section id="error-card" class="card error-card" hidden>
+        <h2>⚠️ Something went wrong</h2>
+        <p id="error-message"></p>
+        <p class="hint">You can change the details and try again below.</p>
+      </section>
+
+      <!-- RESULT / VIDEO PLAYER -->
+      <section id="result-card" class="card" hidden>
+        <div class="result-head">
+          <h2>Your lesson is ready!</h2>
+          <p id="result-meta" class="meta"></p>
+        </div>
+        <div class="player">
+          <video id="player" controls autoplay playsinline></video>
+        </div>
+        <button id="again-btn" class="ghost" type="button">
+          Generate another lesson
+        </button>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
