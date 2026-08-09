@@ -21,7 +21,7 @@ import {UnsupportedLanguageError} from '../groq/lessonGenerator';
 import {enrichPlan} from '../engine/plans/enrichPlan';
 import {generateNarrationAudio, generateNarrationAudioFromScenes} from '../audio/tts';
 import {getMp3DurationSeconds} from '../audio/mp3Duration';
-import {buildMasterTimeline, scaleSceneAnimations} from '../engine/timeline';
+import {buildMasterTimeline, scaleSceneAnimations, validateTimelineSync} from '../engine/timeline';
 import type {AnimationPlan, MasterTimeline} from '../engine/types';
 import type {Lesson, LessonInput} from '../lesson/lessonTypes';
 import {renderComposition} from './renderComposition';
@@ -108,24 +108,46 @@ export async function generateVideo(options: GenerateVideoOptions): Promise<Vide
 
     // 3. Audio-sync: measure each MP3, build the master timeline, and scale
     //    scene animation timings to match the real narration length.
-    //    Video length is FLEXIBLE — it follows the topic: the timeline is the
-    //    sum of the actual narration audio. A small HEADROOM is added to every
-    //    measured duration so narration is NEVER clipped at a scene boundary.
+    //    Video length is FLEXIBLE — it follows the topic: the timeline is driven
+    //    by measured narration audio with AUDIO_SAFETY_MARGIN_SECONDS safety margin.
     onProgress('render', 0);
     const fps = plan.fps || 30;
-    const AUDIO_HEADROOM = 0.6;
-    const audioDurations: Record<string, number> = {};
+    const rawAudioDurations: Record<string, number> = {};
     const durationByScene = new Map(plan.scenes.map((s) => [s.id, s.duration]));
+
     for (const [id, fileName] of Object.entries(rawAudio)) {
       try {
-        audioDurations[id] = (await getMp3DurationSeconds(path.join(audioDirPath, fileName))) + AUDIO_HEADROOM;
-      } catch {
-        audioDurations[id] = (durationByScene.get(id) ?? 8) * 1.15 + 1;
-        console.warn(`[pipeline] could not measure audio for scene "${id}" — using estimate.`);
+        const measured = await getMp3DurationSeconds(path.join(audioDirPath, fileName));
+        rawAudioDurations[id] = measured;
+      } catch (err) {
+        const fallback = (durationByScene.get(id) ?? 8);
+        rawAudioDurations[id] = fallback;
+        console.warn(`[pipeline] could not measure audio for scene "${id}" (${err}) — using estimate ${fallback}s.`);
       }
     }
 
-    const timeline: MasterTimeline = buildMasterTimeline(plan, audioDurations, audio, fps);
+    const timeline: MasterTimeline = buildMasterTimeline(plan, rawAudioDurations, audio, fps);
+
+    // Diagnostics & Validation: print per-scene [SYNC] tracing
+    console.log('\n--- [AUDIO/VISUAL SYNC DIAGNOSTICS] ---');
+    for (const entry of timeline.scenes) {
+      const estimated = durationByScene.get(entry.sceneId) ?? 0;
+      const audioSec = rawAudioDurations[entry.sceneId] ?? estimated;
+      const marginSec = (entry.durationFrames - (entry.audioEndFrame - entry.audioStartFrame)) / fps;
+      console.log(
+        `[SYNC] scene=${entry.sceneId} estimated=${estimated.toFixed(2)}s audio=${audioSec.toFixed(2)}s ` +
+        `margin=${marginSec.toFixed(2)}s final=${entry.durationSeconds.toFixed(2)}s ` +
+        `start=${entry.startFrame} end=${entry.endFrame} audioStart=${entry.audioStartFrame} audioEnd=${entry.audioEndFrame}`,
+      );
+    }
+    console.log(`[SYNC] totalDuration=${timeline.totalSeconds.toFixed(2)}s totalFrames=${timeline.totalFrames}\n`);
+
+    // Validate sync: assert audioDuration <= visualDuration for every scene
+    const validation = validateTimelineSync(timeline, rawAudioDurations);
+    if (!validation.valid) {
+      console.error('[SYNC WARNING/ERROR] Audio sync validation failed:', validation.errors);
+    }
+
     const syncedPlan: AnimationPlan = {
       ...plan,
       totalDuration: timeline.totalSeconds,

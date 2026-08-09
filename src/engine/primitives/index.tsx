@@ -7,6 +7,7 @@ import * as Cards from './cards';
 import * as MathP from './math';
 import * as Cs from './cs';
 import * as Physics from './physics';
+import * as Science from './science';
 
 export interface ElementRenderContext {
   element: VisualElement;
@@ -43,6 +44,9 @@ const REGISTRY: Record<ElementType, PrimitiveComponent> = {
   vector: MathP.Vector,
   numberLine: MathP.NumberLine,
   geometricShape: MathP.GeometricShape,
+  atom: Science.AtomPrimitive,
+  dnaStrand: Science.DnaStrand,
+  tangentLine: Science.TangentLine,
   array: Cs.ArrayVisual,
   arrayElement: Cs.ArrayElement,
   pointer: Cs.Pointer,

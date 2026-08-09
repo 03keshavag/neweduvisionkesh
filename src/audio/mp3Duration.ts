@@ -59,53 +59,65 @@ function parseHeader(buf: Buffer, offset: number): ParsedHeader | null {
     frameLength = Math.floor((144 * bitrateKbps * 1000) / sampleRate) + padding;
   } else {
     // Layer III: 1152 (MPEG1) or 576 (MPEG2/2.5)
+    // Note: for MPEG-2 and MPEG-2.5 Layer III, the frame size coefficient is 72 (not 144)
     samplesPerFrame = mpeg1 ? 1152 : 576;
-    frameLength = Math.floor((144 * bitrateKbps * 1000) / sampleRate) + padding;
+    const coef = mpeg1 ? 144 : 72;
+    frameLength = Math.floor((coef * bitrateKbps * 1000) / sampleRate) + padding;
   }
 
   if (frameLength <= 4 || Number.isNaN(sampleRate) || sampleRate <= 0) return null;
   return {frameLength, sampleRate, samplesPerFrame, bitrateKbps};
 }
 
-/** First byte offset at which audio frames start (skips ID3v2 tags). */
-function audioStartOffset(buf: Buffer): number {
-  if (buf.length > 10 && buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) {
-    // sync-safe integer at bytes 6..9
+/** Check if there is an ID3v2 tag at `offset` and return its total size (header + payload), or 0 if not ID3v2. */
+function id3v2TagLengthAt(buf: Buffer, offset: number): number {
+  if (offset + 10 <= buf.length && buf[offset] === 0x49 && buf[offset + 1] === 0x44 && buf[offset + 2] === 0x33) {
+    // 4-byte sync-safe integer at bytes 6..9
     const size =
-      ((buf[6] & 0x7f) << 21) | ((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
+      ((buf[offset + 6] & 0x7f) << 21) |
+      ((buf[offset + 7] & 0x7f) << 14) |
+      ((buf[offset + 8] & 0x7f) << 7) |
+      (buf[offset + 9] & 0x7f);
     return 10 + size;
   }
   return 0;
 }
 
 /** Duration (seconds) of an MP3 file, or a size-based estimate if unparseable. */
-export function mp3DurationSeconds(buffer: Buffer, fallbackKbps = 128): number {
-  const start = audioStartOffset(buffer);
-  let offset = start;
-  let totalSamples = 0;
-  let sampleRate = 0;
+export function mp3DurationSeconds(buffer: Buffer, fallbackKbps = 64): number {
+  let offset = 0;
+  let totalDurationSeconds = 0;
   let frames = 0;
+  let lastKnownBitrate = fallbackKbps;
 
   while (offset + 4 <= buffer.length && frames < 1_000_000) {
+    // Check if an ID3v2 tag is present at the current offset (e.g. at the start of a concatenated chunk)
+    const id3Length = id3v2TagLengthAt(buffer, offset);
+    if (id3Length > 0) {
+      offset += id3Length;
+      continue;
+    }
+
     const header = parseHeader(buffer, offset);
     if (!header) {
-      // Try to re-sync over the next byte (tolerates junk between frames).
+      // Try to re-sync over the next byte (tolerates junk or padding between frames).
       offset += 1;
       continue;
     }
-    if (frames === 0) sampleRate = header.sampleRate;
-    totalSamples += header.samplesPerFrame;
+
+    lastKnownBitrate = header.bitrateKbps;
+    totalDurationSeconds += header.samplesPerFrame / header.sampleRate;
     frames += 1;
     offset += header.frameLength;
   }
 
-  if (frames > 0 && sampleRate > 0) {
-    return totalSamples / sampleRate;
+  if (frames > 0 && totalDurationSeconds > 0) {
+    return totalDurationSeconds;
   }
 
-  // Fallback: assume constant bitrate from the audio bytes.
-  const audioBytes = buffer.length - start;
-  return (audioBytes * 8) / (fallbackKbps * 1000);
+  // Fallback: estimate from total audio bytes using detected or fallback bitrate.
+  const audioBytes = Math.max(0, buffer.length);
+  return (audioBytes * 8) / (lastKnownBitrate * 1000);
 }
 
 /** Convenience: read a file and return its duration in seconds. */

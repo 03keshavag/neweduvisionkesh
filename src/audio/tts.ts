@@ -87,32 +87,90 @@ export function languageToLocale(language: string): string {
   return locale;
 }
 
-/** Split a narration into chunks that fit Google TTS's per-request limit. */
-export function splitNarration(text: string, limit = MAX_CHARS_PER_REQUEST): string[] {
-  const clean = text.replace(/\s+/g, ' ').trim();
-  if (clean.length <= limit) {
-    return clean ? [clean] : [];
-  }
-
-  const sentences = clean.split(/(?<=[.!?।])\s+/);
+/** Split a long string into chunks bounded by word/clause boundaries up to `limit`. */
+function chunkLongSentence(text: string, limit: number): string[] {
+  const words = text.trim().split(/\s+/);
   const chunks: string[] = [];
   let current = '';
 
-  for (const sentence of sentences) {
-    if ((current + ' ' + sentence).trim().length <= limit) {
-      current = (current + ' ' + sentence).trim();
+  for (const word of words) {
+    if (!word) continue;
+    // If a single word is somehow longer than limit, hard-slice it
+    if (word.length > limit) {
+      if (current) {
+        chunks.push(current);
+        current = '';
+      }
+      let rem = word;
+      while (rem.length > limit) {
+        chunks.push(rem.slice(0, limit));
+        rem = rem.slice(limit);
+      }
+      if (rem) current = rem;
+      continue;
+    }
+
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= limit) {
+      current = candidate;
     } else {
       if (current) {
         chunks.push(current);
       }
-      // A single sentence longer than the limit — hard-break it.
-      current = sentence.slice(0, limit);
-      current = sentence.length > limit ? sentence.slice(0, limit) : sentence;
+      current = word;
     }
   }
+
   if (current) {
     chunks.push(current);
   }
+  return chunks;
+}
+
+/** Split a narration into chunks that fit Google TTS's per-request limit. */
+export function splitNarration(text: string, limit = MAX_CHARS_PER_REQUEST): string[] {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (!clean) {
+    return [];
+  }
+  if (clean.length <= limit) {
+    return [clean];
+  }
+
+  // Split on sentence terminators: English (. ! ?), Indian danda (।), semicolon, or newline
+  const sentences = clean.split(/(?<=[.!?।;\n])\s+/);
+  const chunks: string[] = [];
+  let current = '';
+
+  for (const sentence of sentences) {
+    const trimmedSentence = sentence.trim();
+    if (!trimmedSentence) continue;
+
+    if (trimmedSentence.length > limit) {
+      if (current) {
+        chunks.push(current);
+        current = '';
+      }
+      // Sub-divide long sentence without discarding any text
+      const subChunks = chunkLongSentence(trimmedSentence, limit);
+      chunks.push(...subChunks);
+    } else {
+      const candidate = current ? `${current} ${trimmedSentence}` : trimmedSentence;
+      if (candidate.length <= limit) {
+        current = candidate;
+      } else {
+        if (current) {
+          chunks.push(current);
+        }
+        current = trimmedSentence;
+      }
+    }
+  }
+
+  if (current) {
+    chunks.push(current);
+  }
+
   return chunks;
 }
 

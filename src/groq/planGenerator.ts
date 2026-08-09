@@ -43,18 +43,59 @@ function isTooShort(plan: AnimationPlan): boolean {
   return false;
 }
 
+/**
+ * Semantic validation: ensures the generated plan actually contains the visual
+ * entities and relationships necessary to teach the topic.
+ */
+export function validatePlanSemantics(plan: AnimationPlan, topic: string): {valid: boolean; reason?: string} {
+  const t = topic.toLowerCase();
+  const allElements = plan.scenes.flatMap((s) => s.elements);
+  const elementTypes = new Set(allElements.map((e) => e.type));
+
+  if (t.includes('projectile') || t.includes('trajectory')) {
+    const hasTrajectory = elementTypes.has('trajectory') || elementTypes.has('physicsObject') || elementTypes.has('particle');
+    const hasPhysicsArrows = elementTypes.has('velocityArrow') || elementTypes.has('forceArrow') || elementTypes.has('arrow') || allElements.some((e) => e.props?.showVelocity || e.props?.showGravity);
+    if (!hasTrajectory && !hasPhysicsArrows) {
+      return {valid: false, reason: 'Projectile motion plan must contain a trajectory or physics object with velocity/gravity vectors.'};
+    }
+  } else if (t.includes('binary search') || t.includes('algorithm')) {
+    const hasArrayOrStructure = elementTypes.has('array') || elementTypes.has('arrayElement') || elementTypes.has('pointer') || elementTypes.has('algorithmStep');
+    if (!hasArrayOrStructure) {
+      return {valid: false, reason: 'Binary search plan must contain an array or pointer visualization.'};
+    }
+  } else if (t.includes('atom') || t.includes('bond') || t.includes('chemical')) {
+    const hasChem = elementTypes.has('atom') || elementTypes.has('particle') || elementTypes.has('circle') || elementTypes.has('node');
+    if (!hasChem) {
+      return {valid: false, reason: 'Chemistry plan must contain atomic, molecular, or particle models.'};
+    }
+  } else if (t.includes('dna') || t.includes('cell') || t.includes('biology')) {
+    const hasBio = elementTypes.has('dnaStrand') || elementTypes.has('geometricShape') || elementTypes.has('circle') || elementTypes.has('node');
+    if (!hasBio) {
+      return {valid: false, reason: 'Biology plan must contain DNA or anatomical/cellular visual structures.'};
+    }
+  }
+
+  return {valid: true};
+}
+
 /** Generate the plan and parse + validate it into an AnimationPlan. */
 async function requestPlan(
   input: LessonInput,
   model: string,
   attempt: number,
+  semanticHint?: string,
 ): Promise<AnimationPlan> {
   const {topic, language, ageGroup} = input;
   const user = buildPlanUserPrompt({topic, language, ageGroup});
-  const expandHint =
-    attempt > 0
-      ? `\n\nIMPORTANT — the previous attempt was too short. You MUST output at least ${MIN_PLAN_SCENES} scenes and at least ${MIN_PLAN_SECONDS} seconds of narration in total (longer narrations per scene, more scenes). Add an intro, a worked example, a step-by-step process (progressSteps/taskList), a timeline, and a recap so the video genuinely explains the topic fully. Keep every scene's narration 2-4 sentences.`
-      : '';
+  let promptSuffix = '';
+  if (attempt > 0) {
+    promptSuffix = `\n\nIMPORTANT REVISION REQUIRED:\n`;
+    if (semanticHint) {
+      promptSuffix += `- ${semanticHint}\n`;
+    }
+    promptSuffix += `- You MUST output at least ${MIN_PLAN_SCENES} scenes and at least ${MIN_PLAN_SECONDS} seconds of narration in total.\n`;
+    promptSuffix += `- Focus on the core mathematical/physical/scientific visual model (moving parts, vectors, equations tied to visuals) rather than generic text cards.`;
+  }
 
   const client = getGroqClient();
   const completion = await client.chat.completions.create({
@@ -62,7 +103,7 @@ async function requestPlan(
     temperature: attempt > 0 ? 0.7 : 0.5,
     messages: [
       {role: 'system', content: buildPlanSystemPrompt()},
-      {role: 'user', content: user + expandHint},
+      {role: 'user', content: user + promptSuffix},
     ],
     response_format: {type: 'json_object'},
   });
@@ -90,10 +131,20 @@ export async function generateAnimationPlan(input: LessonInput): Promise<Animati
 
   const model = getGroqModel();
   let lastError: unknown = null;
+  let lastSemanticReason: string | undefined;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
-      const plan = await requestPlan(input, model, attempt);
+      const plan = await requestPlan(input, model, attempt, lastSemanticReason);
+
+      // Check semantic model validity (e.g. projectile motion must have trajectory/vectors)
+      const semanticCheck = validatePlanSemantics(plan, input.topic);
+      if (!semanticCheck.valid && attempt < MAX_ATTEMPTS - 1) {
+        console.warn(`[groq] semantic validation failed on attempt ${attempt + 1}: ${semanticCheck.reason}`);
+        lastSemanticReason = semanticCheck.reason;
+        continue;
+      }
+
       // If the first attempt is under-length, retry once with an expand hint.
       if (attempt === 0 && isTooShort(plan)) {
         continue;

@@ -73,11 +73,15 @@ export const EduVisionVideo: React.FC<EduVisionVideoProps> = ({plan, timeline, a
       {timeline.scenes.map((entry) => {
         const url = audio[entry.sceneId] ?? entry.audioUrl;
         if (!url) return null;
+        const audioFrames = Math.max(
+          entry.audioEndFrame - entry.audioStartFrame,
+          entry.durationFrames,
+        );
         return (
           <Sequence
             key={entry.sceneId}
             from={entry.audioStartFrame}
-            durationInFrames={entry.durationFrames}
+            durationInFrames={audioFrames}
           >
             <RemotionAudio src={url} />
           </Sequence>

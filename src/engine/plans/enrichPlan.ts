@@ -183,31 +183,65 @@ function placeAgainst(
   };
 }
 
+/** Diagram elements that must maintain their exact author/Groq coordinates without layout displacement. */
+const DIAGRAM_TYPES = new Set([
+  'coordinatePlane',
+  'graph',
+  'functionCurve',
+  'vector',
+  'numberLine',
+  'geometricShape',
+  'physicsObject',
+  'forceArrow',
+  'velocityArrow',
+  'accelerationArrow',
+  'trajectory',
+  'wave',
+  'particle',
+  'spring',
+  'circuitElement',
+  'atom',
+  'dnaStrand',
+  'tangentLine',
+]);
+
+function isPinnedOrDiagram(el: VisualElement): boolean {
+  return DIAGRAM_TYPES.has(el.type) || Boolean(el.props?.pinned);
+}
+
 /**
- * Fix overlaps for ALL content, deterministically:
+ * Fix overlaps for generic containers, deterministically:
  *   A. containers (cards/shapes/lists) pushed right/down against each other;
  *   B. text kept in place only when it is a caption INSIDE its container,
- *      otherwise pushed clear of containers AND other text — so text never
- *      stacks on text or floats over an unrelated block.
+ *      otherwise pushed clear of containers AND other text.
+ *   C. Scientific and mathematical diagram elements are protected and NEVER displaced.
  */
 function fixLayout(elements: VisualElement[], width: number, height: number, bottomClear: number): VisualElement[] {
   const out = elements.map((e) => ({...e, position: {...e.position}}));
 
-  // A. containers first.
+  // A. containers first (skip diagrams and pinned items).
   const placedC: Box[] = [];
   for (const el of out) {
     if (isDeco(el) || !BIG_TYPES.has(el.type)) continue;
     const b = boxOf(el, width, height);
+    if (isPinnedOrDiagram(el)) {
+      placedC.push({x: el.position.x, y: el.position.y, w: b.w, h: b.h});
+      continue;
+    }
     const pos = placeAgainst({x: el.position.x, y: el.position.y, b}, placedC, width, height, bottomClear);
     el.position = {x: pos.x, y: pos.y};
     placedC.push({x: pos.x, y: pos.y, w: b.w, h: b.h});
   }
 
-  // B. text last (avoids containers and other text).
+  // B. text last (avoids containers and other text, respects diagrams).
   const placedT: Box[] = [];
   for (const el of out) {
     if (isDeco(el) || !TEXTS.has(el.type)) continue;
     const b = boxOf(el, width, height);
+    if (isPinnedOrDiagram(el)) {
+      placedT.push({x: el.position.x, y: el.position.y, w: b.w, h: b.h});
+      continue;
+    }
     const cx = el.position.x + b.w / 2;
     const cy = el.position.y + b.h / 2;
     const isCaption = placedC.some(
@@ -236,9 +270,11 @@ function toLabel(text: string, fallback: string): string {
   const clean = (text ?? '').trim().split(/[.\n]/)[0].slice(0, 36).trim();
   return clean || fallback;
 }
+const FLOW_TYPES = new Set(['infoCard', 'stepCard', 'taskList', 'progressSteps']);
+
 /**
- * Auto-draw connector arrows between blocks that sit on the same horizontal
- * band and have a clear gap — guaranteed arrows even if the model drew none.
+ * Auto-draw connector arrows between flow cards that sit on the same horizontal
+ * band and have a clear gap — guaranteed arrows for process flowcharts.
  */
 function addAutoArrows(
   elements: VisualElement[],
@@ -248,10 +284,10 @@ function addAutoArrows(
 ): {elements: VisualElement[]; animations: AnimationAction[]} {
   const blocks = elements
     .map((e) => ({e, b: boxOf(e, width, height)}))
-    .filter(({e}) => BIG_TYPES.has(e.type) && (e.zIndex ?? 0) >= 0);
+    .filter(({e}) => FLOW_TYPES.has(e.type) && (e.zIndex ?? 0) >= 0);
   if (blocks.length < 2) return {elements, animations};
 
-  // Band grouping: blocks whose vertical positions are close belong together.
+  // Band grouping: flow blocks whose vertical positions are close belong together.
   const byY = [...blocks].sort((a, b) => a.b.y - b.b.y);
   const bands: {e: VisualElement; b: Box}[][] = [];
   for (const item of byY) {
@@ -332,6 +368,7 @@ function enrichScene(
   // so content must stay higher in that case.
   const hasBottomCard = scene.elements.some((e) => e.type === 'stepCard' || e.type === 'infoCard');
   const bottomClear = hasBottomCard ? height - 96 : height - 250;
+  const isScientificScene = scene.elements.some(isPinnedOrDiagram);
 
   // 1. Section label (top of frame).
   const labels =
@@ -342,31 +379,33 @@ function enrichScene(
   let elements: VisualElement[] = [...scene.elements];
   let animations: AnimationAction[] = [...scene.animations];
 
-  // 2. Decorative backdrop — subtle, additive, always behind content.
-  elements = [
-    ...elements,
-    {
-      id: `deco-c1-${index}`,
-      type: 'circle',
-      position: {x: width - 270, y: 40},
-      props: {radius: 150, fill: 'rgba(56,182,255,0.06)', stroke: 'rgba(56,182,255,0.14)'},
-      zIndex: -30,
-    },
-    {
-      id: `deco-c2-${index}`,
-      type: 'circle',
-      position: {x: 40, y: height - 270},
-      props: {radius: 130, fill: 'rgba(244,163,0,0.06)', stroke: 'rgba(244,163,0,0.14)'},
-      zIndex: -30,
-    },
-    {
-      id: `deco-line-${index}`,
-      type: 'line',
-      position: {x: 100, y: 120},
-      props: {from: {x: 0, y: 0}, to: {x: width - 200, y: 0}, stroke: 'rgba(255,255,255,0.05)'},
-      zIndex: -30,
-    },
-  ];
+  // 2. Decorative backdrop — only for generic card scenes, keep scientific canvases uncluttered.
+  if (!isScientificScene) {
+    elements = [
+      ...elements,
+      {
+        id: `deco-c1-${index}`,
+        type: 'circle',
+        position: {x: width - 270, y: 40},
+        props: {radius: 150, fill: 'rgba(56,182,255,0.06)', stroke: 'rgba(56,182,255,0.14)'},
+        zIndex: -30,
+      },
+      {
+        id: `deco-c2-${index}`,
+        type: 'circle',
+        position: {x: 40, y: height - 270},
+        props: {radius: 130, fill: 'rgba(244,163,0,0.06)', stroke: 'rgba(244,163,0,0.14)'},
+        zIndex: -30,
+      },
+      {
+        id: `deco-line-${index}`,
+        type: 'line',
+        position: {x: 100, y: 120},
+        props: {from: {x: 0, y: 0}, to: {x: width - 200, y: 0}, stroke: 'rgba(255,255,255,0.05)'},
+        zIndex: -30,
+      },
+    ];
+  }
 
   // 3. A visible text element if the scene has none.
   if (!elements.some((e) => TEXTISH_TYPES.has(e.type))) {

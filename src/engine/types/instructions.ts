@@ -23,6 +23,10 @@ export type ElementType =
   // Cards / callouts
   | 'stepCard'
   | 'infoCard'
+  // Chemistry & Biology
+  | 'atom'
+  | 'dnaStrand'
+  | 'tangentLine'
   // Shapes
   | 'circle'
   | 'rectangle'
@@ -135,6 +139,39 @@ export interface ElementProps {
   children?: string[];
   direction?: 'up' | 'down' | 'left' | 'right';
   opacity?: number;
+  // Enhanced Projectile & Physics props
+  showProjectile?: boolean;
+  showVelocity?: boolean;
+  showVelocityComponents?: boolean;
+  showGravity?: boolean;
+  showApex?: boolean;
+  showMaximumHeight?: boolean;
+  showRange?: boolean;
+  showLaunchAngle?: boolean;
+  launchAngle?: number;
+  initialVelocity?: number;
+  gravity?: number;
+  ground?: boolean;
+  progress?: number;
+  apexLabel?: string;
+  rangeLabel?: string;
+  heightLabel?: string;
+  // Enhanced Chemistry & Biology props
+  elementSymbol?: string;
+  electronCount?: number;
+  valenceElectrons?: number;
+  charge?: number | string;
+  isPositiveIon?: boolean;
+  isNegativeIon?: boolean;
+  showBonds?: boolean;
+  strandSeparation?: number;
+  basePairs?: string[];
+  // Math & Calculus props
+  slope?: number;
+  tangentX?: number;
+  showTangent?: boolean;
+  showArea?: boolean;
+  pinned?: boolean;
   [key: string]: unknown;
 }
 
