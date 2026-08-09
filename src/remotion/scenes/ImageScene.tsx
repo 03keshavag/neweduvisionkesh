@@ -6,7 +6,6 @@
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import {AnimatedText} from '../components/AnimatedText';
-import {Audio} from '../components/Audio';
 import {SceneImage} from '../components/SceneImage';
 import {Subtitle} from '../components/Subtitle';
 import type {SceneProps} from './types';
@@ -18,7 +17,6 @@ export const ImageScene: React.FC<SceneProps> = ({scene}) => {
     <AbsoluteFill
       style={{alignItems: 'center', justifyContent: 'center', padding: 80}}
     >
-      <Audio src={`audio/narration_${scene.id}.mp3`} />
       {heading ? (
         <AnimatedText variant="heading" align="center" delay={4}>
           {heading}

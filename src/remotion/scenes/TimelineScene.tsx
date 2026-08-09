@@ -6,7 +6,6 @@
 import React from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
 import {AnimatedText} from '../components/AnimatedText';
-import {Audio} from '../components/Audio';
 import {Subtitle} from '../components/Subtitle';
 import {clamp} from '../animations/fade';
 import {COLORS, FONTS, LAYOUT} from '../theme';
@@ -22,7 +21,6 @@ export const TimelineScene: React.FC<SceneProps> = ({scene}) => {
 
   return (
     <AbsoluteFill style={{padding: `${LAYOUT.paddingY}px ${LAYOUT.paddingX}px`, justifyContent: 'center'}}>
-      <Audio src={`audio/narration_${scene.id}.mp3`} />
       {heading ? (
         <AnimatedText variant="heading" delay={2}>
           {heading}

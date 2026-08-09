@@ -63,7 +63,7 @@ async function runJob(job: Job): Promise<void> {
       language: job.input.language ?? '',
       ageGroup: job.input.ageGroup || undefined,
     };
-    const {lesson} = await generateVideo({
+    const result = await generateVideo({
       input,
       outputDir: OUTPUT_DIR,
       audioDir: AUDIO_DIR,
@@ -76,9 +76,9 @@ async function runJob(job: Job): Promise<void> {
     });
     job.status = 'done';
     job.stage = null;
-    job.title = lesson.title;
+    job.title = result.title;
     job.videoUrl = `/output/videos/generated-${job.id}.mp4`;
-    job.duration = lesson.estimatedDuration;
+    job.duration = result.duration;
   } catch (err) {
     job.status = 'error';
     job.stage = null;

@@ -8,16 +8,26 @@ AI-powered, multilingual cultural learning video generator.
 ```
 Topic + language
       ↓
-Groq AI            (src/groq)      → structured educational lesson JSON
+Groq AI            (src/groq)      → flexible AnimationPlan (elements + animations)
+                                      (legacy structured lesson as fallback)
       ↓
-Lesson processing  (src/lesson)    → validate/normalize lesson into scenes
+Plan validation    (src/engine/plans) → tolerant Zod schema + normalization
       ↓
 TTS / narration    (src/audio)     → per-scene narration audio
       ↓
-Remotion           (src/remotion)  → animated educational video
+Audio sync         (src/audio/mp3Duration + src/engine/timeline)
+                                    → master timeline (frames match narration)
       ↓
-Renderer           (src/renderer)  → headless MP4 render & export
+Remotion           (src/engine)    → animated explainer (blocks, arrays, pointers,
+                                      arrows, callouts) → EduVisionVideo MP4
 ```
+
+> The flexible engine **produces videos in the style of a hand-built explainer
+> (array blocks, LOW/MID/HIGH pointers, process cards, equations, physics
+> diagrams)** — driven entirely by Groq's structured `AnimationPlan`, so ANY
+> topic renders rich animations instead of a fixed slideshow. If the model's
+> plan output ever fails validation, the pipeline falls back to the legacy
+> strict-lesson engine so a video is still produced.
 
 ## Scope
 
@@ -28,18 +38,27 @@ MIL verification system, authentication, database, or deployment.
 ## Status
 
 - Initial project scaffold (Node.js + TypeScript + React + Remotion) ✅
-- Groq lesson-generation system: `groq/` + `lesson/` ✅
+- **Flexible animation engine** `src/engine` ✅ (NEW — produces videos like a
+  hand-made explainer, driven by Groq's `AnimationPlan` JSON)
+  - ~40 reusable primitives: array blocks, pointers, equations, numbers line,
+    code blocks, physics objects/arrows, waves, info/step cards, …
+  - Timed animations (create, fadeIn, move, highlight, updateValue, drawArrow…)
+    and scene transitions; audio-synced master timeline
+  - Verified end-to-end: Groq plan → TTS → audio sync → MP4 (`scripts/e2e-flexible.ts`)
+  - Registered composition `EduVisionVideo` (binary-search demo as defaultProps)
+- Groq plan generator: `groq/planGenerator` + tolerant Zod validation
+  (`engine/plans/planSchema`) with legacy-lesson fallback
+- Groq lesson-generation system: `groq/` + `lesson/` ✅ (fallback engine)
   - Strict JSON output, validated with Zod before anything else sees it
   - Malformed JSON, missing fields, invalid scene durations, unsupported
     languages are rejected; `estimatedDuration` is normalized to the scene sum
 - Reusable Remotion video engine ✅
-  - `LessonVideo` — data-driven 1920×1080 composition (duration derives from the lesson)
+  - `LessonVideo` — legacy data-driven 1920×1080 composition
   - Six scene templates presenting information in animated blocks/cards
-  - Verified with Mysuru Dasara (Kannada), Silk Road (English), etc.
 - TTS narration (`src/audio`) + audio embedded into the MP4 ✅
 - End-to-end website (`src/server` + `public`) ✅
   - Form (topic/language/age) → Groq → TTS → Remotion → MP4 → inline player
-  - Live progress **with elapsed time / ETA** shown on the page
+  - Live progress **with elapsed time / ETA** shown on the page (plan/lesson/tts/render stages)
   - Loading + human-readable error states
 
 ## Run the website
@@ -56,52 +75,65 @@ ready it plays directly on the same page (with audio).
 
 Other commands:
 ```bash
-npm run studio                # Remotion preview (sample lesson)
-npm run test:lesson           # generate a lesson to stdout (needs GROQ_API_KEY)
+npm run studio                # Remotion Studio preview (flexible demo + sample lesson)
+npm run render:demo           # render the flexible binary-search demo → output/videos/flexible-demo.mp4
+npm run test:plan             # generate a flexible AnimationPlan to stdout (needs GROQ_API_KEY)
+npm run test:lesson           # generate a legacy lesson to stdout (needs GROQ_API_KEY)
+npm run verify:flexible       # unit-checks the MP3 parser, plan schema, timeline, mock plan
+npm run e2e:flexible          # full pipe: Groq plan → TTS → audio sync → MP4 (needs GROQ_API_KEY)
 npm run typecheck
 ```
 
-> If `GROQ_API_KEY` is missing, the pipeline uses a built-in mock lesson so the
-> website → TTS → render → player flow can still be tested end-to-end.
+> If `GROQ_API_KEY` is missing, the pipeline uses a built-in mock plan (or mock
+> lesson) so the website → TTS → render → player flow can still be tested
+> end-to-end.
 
 ## Project structure
 
 ```
 src/
-  groq/        ── Groq AI integration (lesson JSON generation) ✅
-  lesson/      ── lesson schema + parser + validation ✅
+  engine/      ── FLEXIBLE ANIMATION ENGINE ✅
+    types/     ── AnimationPlan / element / animation instruction types
+    plans/     ── tolerant Zod schema + normalization (planSchema.ts)
+    primitives/─ reusable rendered blocks (array, pointer, cards, shapes, math, physics, cs, text)
+    renderer/  ── CompositionRenderer + SceneRenderer (EduVisionVideo MP4)
+    timeline/  ── master timeline builder (audio-synced frame layout)
+    transitions/─ scene fade/slide/zoom/camera
+    demos/     ── binary-search demo plan (the default preview)
+  groq/        ── Groq AI integration (plan + legacy lesson generators, prompts)
+  lesson/      ── legacy lesson schema + parser + validation (fallback engine) ✅
   remotion/
-    scenes/    ── reusable scene templates (Intro/Explanation/Image/Timeline/Fact/Outro)
+    scenes/    ── legacy scene templates (Intro/Explanation/Image/Timeline/Fact/Outro)
     components/─ reusable visual components (AnimatedText, Subtitle, SceneImage…)
-    animations/─ reusable animation utilities (fade, slide, scale, spring)
-    LessonVideo.tsx   ── the data-driven composition
-    sceneRegistry.ts  ── maps lesson scene type → scene component
-    sampleLesson.ts   ── dev-only sample Lesson for preview
-    Root.tsx          ── composition registry
-  audio/       ── TTS / narration — future
-  renderer/    ── headless MP4 rendering logic — future
-  utils/       ── shared utilities
-public/
-  images/ audio/ fonts/ assets/   ── static assets for compositions
+    Root.tsx   ── composition registry (EduVisionVideo + LessonVideo)
+  audio/       ── TTS / narration + pure-Node MP3 duration parser ✅
+  renderer/    ── shared programmatic MP4 renderer + pipeline entry (generateVideo) ✅
+scripts/
+  e2e-flexible.ts / verify-flexible.ts   ── dev verification scripts
+public/        ── vanilla website (form → jobs → inline player)
 output/
-  videos/ audio/ temporary/       ── generated media (gitignored)
+  videos/ audio/      ── generated media (gitignored)
 ```
 
 ## Preview the video engine
 
-The composition is registered with a dev-only sample lesson (Mysuru Dasara in
-Kannada) so the preview works without an API key.
+Two compositions are registered so the preview works without an API key:
+
+- **`EduVisionVideo`** — the flexible engine, defaultProps hold the binary-search
+  demo (array blocks, LOW/MID/HIGH pointers, eliminated cells, step cards).
+- **`LessonVideo`** — the legacy engine, defaultProps hold the Mysuru Dasara
+  sample lesson (Kannada).
 
 ```bash
-npm run studio          # interactive Remotion Studio (hot reload)
-npm run render:verification   # renders output/videos/verification.mp4 (84s)
+npm run studio          # interactive Remotion Studio (both compositions)
+npm run render:demo     # renders output/videos/flexible-demo.mp4 (binary search, ~36s)
+npm run render:verification   # renders the legacy sample lesson (84s)
 npm run typecheck       # TypeScript check
 ```
 
-> **Reusability:** the engine is fully data-driven. Rendering any other lesson
-> means only swapping the `Lesson` object — e.g.
-> `npx remotion still src/index.ts LessonVideo out.png --frame=240 --props="./my-lesson.json"`
-> where the file contains `{ "lesson": { … } }`. No scene code changes.
+> **Flexible engine input:** a video is fully described by an `AnimationPlan`
+> JSON (scenes → elements → timed animations) — no code changes per topic. The
+> demo plan lives at `src/engine/demos/binarySearchDemo.ts`.
 
 ## Environment variables (`.env`)
 

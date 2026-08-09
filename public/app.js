@@ -34,6 +34,7 @@
 
   // Ordered steps shown in the progress card.
   const STEPS = [
+    { key: 'plan', label: 'Designing the animation…' },
     { key: 'lesson', label: 'Generating lesson…' },
     { key: 'tts', label: 'Generating narration…' },
     { key: 'render', label: 'Creating animation…' },
@@ -115,7 +116,11 @@
 
   function renderJobProgress(job) {
     const stage = job.stage;
-    if (stage === 'lesson') {
+    if (stage === 'plan') {
+      markStepsUpTo('plan');
+      setBar(false, 0);
+      statusLine.textContent = 'Designing the animated lesson with AI…';
+    } else if (stage === 'lesson') {
       markStepsUpTo('lesson');
       setBar(false, 0);
       statusLine.textContent = 'Generating lesson with AI…';

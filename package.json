@@ -8,10 +8,14 @@
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts",
     "render:verification": "remotion render src/index.ts LessonVideo output/videos/verification.mp4",
+    "render:demo": "remotion render src/index.ts EduVisionVideo output/videos/flexible-demo.mp4",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
     "dev": "remotion studio src/index.ts",
     "test:lesson": "tsx src/groq/testLesson.ts",
+    "test:plan": "tsx src/groq/testPlan.ts",
+    "verify:flexible": "tsx scripts/verify-flexible.ts",
+    "e2e:flexible": "tsx scripts/e2e-flexible.ts",
     "serve": "tsx src/server/server.ts"
   },
   "keywords": [

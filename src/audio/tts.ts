@@ -162,6 +162,30 @@ export async function synthesizeSpeech(
 }
 
 /**
+ * Generate one MP3 per scene and persist to `outDir`.
+ * Returns a mapping of scene id (string or number) → file name.
+ */
+export async function generateNarrationAudioFromScenes(
+  scenes: {id: string | number; narration: string}[],
+  language: string,
+  outDir: string,
+): Promise<Record<string, string>> {
+  const locale = languageToLocale(language);
+  const audioFiles: Record<string, string> = {};
+
+  for (const scene of scenes) {
+    const buffer = await synthesizeSpeech(scene.narration, locale);
+    const fileName = `narration-${String(scene.id)}.mp3`;
+    await writeFile(path.join(outDir, fileName), buffer);
+    audioFiles[String(scene.id)] = fileName;
+    // Pace requests so consecutive scenes don't trip the rate limit.
+    await new Promise((resolve) => setTimeout(resolve, REQUEST_DELAY_MS));
+  }
+
+  return audioFiles;
+}
+
+/**
  * Generate one MP3 per lesson scene and persist to `outDir`.
  * Returns a mapping of scene id → file name.
  */
@@ -169,17 +193,10 @@ export async function generateNarrationAudio(
   lesson: Lesson,
   outDir: string,
 ): Promise<Record<number, string>> {
-  const locale = languageToLocale(lesson.language);
-  const audioFiles: Record<number, string> = {};
-
-  for (const scene of lesson.scenes) {
-    const buffer = await synthesizeSpeech(scene.narration, locale);
-    const fileName = `narration-${scene.id}.mp3`;
-    await writeFile(path.join(outDir, fileName), buffer);
-    audioFiles[scene.id] = fileName;
-    // Pace requests so consecutive scenes don't trip the rate limit.
-    await new Promise((resolve) => setTimeout(resolve, REQUEST_DELAY_MS));
+  const files = await generateNarrationAudioFromScenes(lesson.scenes, lesson.language, outDir);
+  const numeric: Record<number, string> = {};
+  for (const [id, name] of Object.entries(files)) {
+    numeric[Number(id)] = name;
   }
-
-  return audioFiles;
+  return numeric;
 }
