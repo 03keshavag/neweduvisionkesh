@@ -16,7 +16,7 @@ export const Title: React.FC<TextPrimitiveProps> = ({
   startFrame = 0,
   durationFrames = 20,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'spring');
+  const anim = useElementAnimation(startFrame, durationFrames, 'bounce');
   return (
     <div
       style={{
@@ -39,7 +39,7 @@ export const Label: React.FC<TextPrimitiveProps> = ({
   startFrame = 0,
   durationFrames = 15,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'fadeIn');
+  const anim = useElementAnimation(startFrame, durationFrames, 'slideUp');
   return (
     <div
       style={{
@@ -62,7 +62,7 @@ export const Equation: React.FC<TextPrimitiveProps> = ({
   startFrame = 0,
   durationFrames = 18,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'scale');
+  const anim = useElementAnimation(startFrame, durationFrames, 'blurIn');
   return (
     <div
       style={{
@@ -90,7 +90,7 @@ export const HighlightedText: React.FC<TextPrimitiveProps> = ({
   startFrame = 0,
   durationFrames = 15,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'fadeIn');
+  const anim = useElementAnimation(startFrame, durationFrames, 'spring');
   return (
     <div
       style={{

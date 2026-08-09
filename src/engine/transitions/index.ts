@@ -29,12 +29,12 @@ export function computeTransition(
     case 'zoom':
       return {
         opacity: p,
-        transform: `scale(${interpolate(p, [0, 1], [0.92, 1])})`,
+        transform: `scale(${interpolate(p, [0, 1], [1.18, 1])})`,
       };
     case 'camera':
       return {
         opacity: p,
-        transform: `scale(${interpolate(p, [0, 1], [1.05, 1])}) translateY(${interpolate(p, [0, 1], [20, 0])}px)`,
+        transform: `scale(${interpolate(p, [0, 1], [1.08, 1])}) translateY(${interpolate(p, [0, 1], [24, 0])}px)`,
       };
     default:
       return {opacity: 1, transform: 'none'};

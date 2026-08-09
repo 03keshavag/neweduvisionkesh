@@ -2,6 +2,7 @@ import React from 'react';
 import type {ElementType, VisualElement} from '../types';
 import * as Text from './text';
 import * as Shapes from './shapes';
+import * as Process from './process';
 import * as Cards from './cards';
 import * as MathP from './math';
 import * as Cs from './cs';
@@ -28,6 +29,8 @@ const REGISTRY: Record<ElementType, PrimitiveComponent> = {
   highlightedText: Text.HighlightedText,
   stepCard: Cards.StepCard,
   infoCard: Cards.InfoCard,
+  progressSteps: Process.ProgressSteps,
+  taskList: Process.TaskList,
   circle: Shapes.Circle,
   rectangle: Shapes.Rectangle,
   arrow: Shapes.ArrowShape,
@@ -69,13 +72,12 @@ export function renderPrimitive(ctx: ElementRenderContext): React.ReactNode {
   if (!Component) {
     return null;
   }
-  const actionStart = Math.round(ctx.element.props._actionStart as number ?? 0);
   return (
     <Component
       key={ctx.element.id}
       position={ctx.element.position}
       props={ctx.element.props}
-      startFrame={actionStart}
+      startFrame={ctx.startFrame}
       durationFrames={ctx.durationFrames}
     />
   );

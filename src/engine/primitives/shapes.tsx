@@ -17,7 +17,7 @@ export const Circle: React.FC<ShapeProps> = ({
   startFrame = 0,
   durationFrames = 15,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'scale');
+  const anim = useElementAnimation(startFrame, durationFrames, 'spring');
   const r = props.radius ?? 40;
   return (
     <div
@@ -40,7 +40,7 @@ export const Rectangle: React.FC<ShapeProps> = ({
   startFrame = 0,
   durationFrames = 15,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'fadeIn');
+  const anim = useElementAnimation(startFrame, durationFrames, 'scale');
   return (
     <div
       style={{
@@ -176,7 +176,7 @@ export const Grid: React.FC<ShapeProps> = ({position, props, startFrame = 0, dur
 };
 
 export const Polygon: React.FC<ShapeProps> = ({position, props, startFrame = 0, durationFrames = 15}) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'scale');
+  const anim = useElementAnimation(startFrame, durationFrames, 'spring');
   const sides = props.sides ?? 6;
   const r = props.radius ?? 50;
   const points = Array.from({length: sides}, (_, i) => {

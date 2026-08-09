@@ -17,7 +17,7 @@ export const ArrayVisual: React.FC<CsProps> = ({
   startFrame = 0,
   durationFrames = 25,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'fadeIn');
+  const anim = useElementAnimation(startFrame, durationFrames, 'scale');
   const values = (props.values as (string | number)[]) ?? [];
   const highlight =
     props.highlightIndices ??

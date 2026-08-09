@@ -15,6 +15,7 @@
     "test:lesson": "tsx src/groq/testLesson.ts",
     "test:plan": "tsx src/groq/testPlan.ts",
     "verify:flexible": "tsx scripts/verify-flexible.ts",
+    "check:overlaps": "tsx scripts/check-overlaps.ts",
     "e2e:flexible": "tsx scripts/e2e-flexible.ts",
     "serve": "tsx src/server/server.ts"
   },

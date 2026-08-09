@@ -30,6 +30,9 @@ export type ElementType =
   | 'line'
   | 'grid'
   | 'polygon'
+  // Process / tasks
+  | 'progressSteps'
+  | 'taskList'
   // Math
   | 'coordinatePlane'
   | 'graph'
@@ -143,6 +146,23 @@ export interface VisualElement {
   size?: Size;
   props: ElementProps;
   zIndex?: number;
+  /**
+   * Live motion applied by the renderer on top of the element's own entrance
+   * animation (populated by scale/rotate/zoom/pan/morph actions, plus the
+   * enrich pass can request idle motion kinds).
+   */
+  motion?: ElementMotion;
+  /** Idle animation applied continuously by primitives (float/breathe/pulse). */
+  idle?: 'float' | 'breathe' | 'pulse' | 'none';
+}
+
+/** Composite transform applied around an element at render time. */
+export interface ElementMotion {
+  scale?: number;
+  rotate?: number;
+  x?: number;
+  y?: number;
+  opacity?: number;
 }
 
 /** A timed animation action targeting an element. */

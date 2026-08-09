@@ -27,7 +27,7 @@ export const StepCard: React.FC<CardProps> = ({
   startFrame = 0,
   durationFrames = 20,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'slideUp');
+  const anim = useElementAnimation(startFrame, durationFrames, 'bounce');
   return (
     <div
       style={{
@@ -77,7 +77,7 @@ export const InfoCard: React.FC<CardProps> = ({
   startFrame = 0,
   durationFrames = 16,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'fadeIn');
+  const anim = useElementAnimation(startFrame, durationFrames, 'spring');
   const accent = (props.color as string) ?? COLORS.secondary;
   return (
     <div

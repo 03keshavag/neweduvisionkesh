@@ -18,6 +18,7 @@ import {buildMockLesson} from '../groq/mockLesson';
 import {buildMockPlan} from '../groq/mockPlan';
 import {GroqConfigError} from '../groq/groqClient';
 import {UnsupportedLanguageError} from '../groq/lessonGenerator';
+import {enrichPlan} from '../engine/plans/enrichPlan';
 import {generateNarrationAudio, generateNarrationAudioFromScenes} from '../audio/tts';
 import {getMp3DurationSeconds} from '../audio/mp3Duration';
 import {buildMasterTimeline, scaleSceneAnimations} from '../engine/timeline';
@@ -86,6 +87,12 @@ export async function generateVideo(options: GenerateVideoOptions): Promise<Vide
   }
   onProgress('plan', 1);
 
+  // 1b. Guarantee a rich visual baseline regardless of the model's output:
+  //     section labels, decorative shapes, entrance anims for every element.
+  if (plan) {
+    plan = enrichPlan(plan);
+  }
+
   // 2. TTS — one narration MP3 per scene, in a per-job folder under output/audio.
   onProgress('tts', 0);
   const audioDirPath = path.join(audioDir, jobId);
@@ -101,14 +108,20 @@ export async function generateVideo(options: GenerateVideoOptions): Promise<Vide
 
     // 3. Audio-sync: measure each MP3, build the master timeline, and scale
     //    scene animation timings to match the real narration length.
+    //    Video length is FLEXIBLE — it follows the topic: the timeline is the
+    //    sum of the actual narration audio. A small HEADROOM is added to every
+    //    measured duration so narration is NEVER clipped at a scene boundary.
     onProgress('render', 0);
     const fps = plan.fps || 30;
+    const AUDIO_HEADROOM = 0.6;
     const audioDurations: Record<string, number> = {};
+    const durationByScene = new Map(plan.scenes.map((s) => [s.id, s.duration]));
     for (const [id, fileName] of Object.entries(rawAudio)) {
       try {
-        audioDurations[id] = await getMp3DurationSeconds(path.join(audioDirPath, fileName));
+        audioDurations[id] = (await getMp3DurationSeconds(path.join(audioDirPath, fileName))) + AUDIO_HEADROOM;
       } catch {
-        audioDurations[id] = plan.scenes.find((s) => s.id === id)?.duration ?? 8;
+        audioDurations[id] = (durationByScene.get(id) ?? 8) * 1.15 + 1;
+        console.warn(`[pipeline] could not measure audio for scene "${id}" — using estimate.`);
       }
     }
 

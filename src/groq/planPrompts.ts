@@ -20,6 +20,8 @@ export const PLAN_ELEMENT_TYPES = [
   'line',
   'grid',
   'polygon',
+  'progressSteps',
+  'taskList',
   'coordinatePlane',
   'graph',
   'functionCurve',
@@ -72,27 +74,28 @@ export const PLAN_ANIMATION_TYPES = [
   'morph',
 ] as const;
 
+/** Only a small sanity floor — video LENGTH is flexible and driven by topic. */
+export const MIN_PLAN_SCENES = 4;
+export const MIN_PLAN_SECONDS = 20;
+
 const SUBJECT_GUIDANCE = `Subject-specific visual guidance:
-- Computer Science: use array, arrayElement, pointer, variable, stack, queue, linkedList, tree, graphVisual, node, edge, codeBlock, algorithmStep. Example for binary search: a horizontal ARRAY of cells, LOW/MID/HIGH search pointers via props.lowIndex/midIndex/highIndex, dim or cross out eliminated cells (props.eliminatedIndices), then highlight the found cell.
+- Computer Science: use array, arrayElement, pointer, variable, stack, queue, linkedList, tree, graphVisual, node, edge, codeBlock, algorithmStep, progressSteps. Example for binary search: a horizontal ARRAY of cells, LOW/MID/HIGH search pointers via props.lowIndex/midIndex/highIndex, dim or cross out eliminated cells (props.eliminatedIndices), then highlight the found cell.
 - Mathematics: use equation, coordinatePlane, functionCurve, graph, numberLine, vector, geometricShape, infoCard. Animate equations appearing step by step.
 - Physics: use physicsObject, forceArrow, velocityArrow, accelerationArrow, trajectory, wave, particle, spring, circle, arrow.
-- Chemistry / Biology / culture / general: use infoCard blocks joined by arrow "flow" diagrams, rectangle process steps, circle diagrams, timelines (rectangles along a line), and highlightedText callouts.`;
+- Chemistry / Biology / culture / general: use infoCard blocks joined by arrow "flow" diagrams, rectangle process steps, progressSteps bubbles, taskList checklists, circle diagrams, timelines (rectangles along a line), and highlightedText callouts.`;
 
 /** Full system prompt (JSON template embedded). */
 export function buildPlanSystemPrompt(): string {
-  return `You are EduVision's motion-graphics storyboard engine. You produce a STRICT JSON "animation plan" that drives a Remotion explainer video with animated BLOCKS, shapes, arrays, pointers, arrows and callouts.
+  return `You are EduVision's motion-graphics storyboard engine. You produce a STRICT JSON "animation plan" that drives a Remotion explainer video with animated BLOCKS, shapes, arrays, pointers, arrows, task lists and callouts.
 
 RULES:
 1. Respond with ONLY one JSON object. No markdown, no code fences, no commentary.
-2. Write ALL learner-facing text (narration, props.text/title/label, stepCard text) in the requested language. Element and action "id" values stay simple ASCII like "title", "arr", "ptr", "box1".
+2. Write ALL learner-facing text (narration, props.text/title/label, stepCard/taskList/progressSteps text) in the requested language. Element and action "id" values stay simple ASCII like "title", "arr", "ptr", "box1".
 3. Canvas 1920 x 1080, fps 30. element.position is the TOP-LEFT corner and must stay inside the canvas. Keep the bottom ~150px clear for the narration bar.
-4. Produce 3 to 7 scenes. Each scene has 2-6 elements, 1-5 timed animations and a short narration (2-3 sentences, exactly what TTS speaks — never stage directions).
-5. element "type" and animation "type" may ONLY be drawn from these lists:
-   Elements: ${PLAN_ELEMENT_TYPES.join(', ')}.
-   Animations: ${PLAN_ANIMATION_TYPES.join(', ')}.
-   An animation targetId must exist in the SAME scene's elements.
-6. scene "duration" is a best estimate in seconds (~2.6 words spoken per second); the renderer re-syncs timing to the real narration audio later. Keep durations 6-12s.
-7. DO NOT make a slideshow of static cards. Scenes must EVOLVE: elements appear at different startTime, highlight, move, swap, update values, draw arrows.
+4. Produce ${MIN_PLAN_SCENES} to 12 SCENES — let the TOPIC dictate the length. A small topic may be 4-6 short scenes (~20-40 seconds); a rich topic should be 8-12 scenes (~60-120 seconds). Never pad artificially and never cut a topic short. A very LONG JSON is completely fine — 1000 to 2000 lines of JSON is expected, never shorten the plan to save tokens; richness of visuals is the top priority.
+5. Every scene has 8-14 elements and 6-10 timed animations, plus a narration of 2-4 sentences (20-35 words, exactly what TTS speaks — never stage directions). Longer, well-paced narrations produce fuller videos.
+6. USE MAXIMUM VISUAL VARIETY AND KINETIC ENERGY: across the whole video use at least 10 DIFFERENT element types; within each scene mix at least 4 KINDS — shapes (circle, rectangle, polygon) AND connecting arrows/lines AND text (title, label, highlightedText) AND cards (infoCard, stepCard) — plus topic-specific primitives (array/pointer for CS, equation/numberLine for Math, progressSteps/taskList for processes and tasks). Add decorative accents (background circles, corner shapes, connector lines). Then ANIMATE everything: distinct entrance moments per element (fadeIn/create/show with different startTime so things cascade), plus kinetic actions in every scene — highlight, move, pan (slide across), scale or zoom (push in / pull out to focus), rotate (tilt into place), morph (transform one visual into another), updateValue (numbers/values change), drawArrow (connectors draw themselves), hide (leave). Nothing may stand still: every scene should feel alive and kinetic, like a professionally animated explainer.
+7. scene "duration" is a best estimate in seconds (~2.6 words spoken per second, 8-14s per scene). The renderer re-syncs timing to the real narration audio later, so the total will track audio length.
 8. Use a stepCard element near the bottom for process narration (e.g. {"title":"Step 2","text":"23 < 38 → eliminate the right half"}).
 9. ${SUBJECT_GUIDANCE}
 10. Prefer educational clarity. Never invent facts; tie visuals tightly to narration.

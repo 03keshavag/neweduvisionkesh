@@ -58,6 +58,63 @@ export function buildMockPlan(input: LessonInput): AnimationPlan {
 
   scenes.push(
     {
+      id: 'process',
+      purpose: 'Step-by-step process bubbles',
+      narration: `Let us break ${topic} down into clear steps. Each number in the diagram is one idea we will explore.`,
+      duration: 10,
+      onScreenLabels: ['How It Works'],
+      elements: [
+        {id: 'psteps', type: 'progressSteps', position: {x: 480, y: 430}, props: {steps: ['First step', 'Middle step', 'Final step'], currentStep: 1}},
+        {id: 'plabel', type: 'label', position: {x: 560, y: 720}, props: {text: 'Follow the numbered steps from left to right', color: '#38b6ff'}},
+      ],
+      animations: [
+        {id: 'p1', type: 'fadeIn', targetId: 'psteps', startTime: 0.4, duration: 0.8},
+        {id: 'p2', type: 'fadeIn', targetId: 'plabel', startTime: 2.4, duration: 0.6},
+        {id: 'p3', type: 'highlight', targetId: 'psteps', startTime: 3.0, duration: 0.5, params: {value: 1}},
+      ],
+      transition: {type: 'fade', duration: 0.4},
+    },
+    {
+      id: 'tasks',
+      purpose: 'Task checklist revealing items',
+      narration: `Here are the tasks we will complete in this lesson. Watch the check marks appear one by one as we finish each one.`,
+      duration: 10,
+      onScreenLabels: ['Tasks'],
+      elements: [
+        {id: 'tl', type: 'taskList', position: {x: 640, y: 420}, props: {items: ['Learn the basics', 'See an example', 'Review with a recap'], completed: 1}},
+      ],
+      animations: [
+        {id: 'q1', type: 'fadeIn', targetId: 'tl', startTime: 0.4, duration: 0.8},
+        {id: 'q2', type: 'updateValue', targetId: 'tl', startTime: 2.6, duration: 0.4, params: {value: 2}},
+      ],
+      transition: {type: 'slide', duration: 0.4},
+    },
+    {
+      id: 'example',
+      purpose: 'Concrete example diagram',
+      narration: `For example, think of ${topic} as a cycle: one idea leads to the next, and the loop keeps moving forward.`,
+      duration: 9,
+      onScreenLabels: ['Example'],
+      elements: [
+        {id: 'c1', type: 'circle', position: {x: 540, y: 420}, props: {radius: 90, fill: 'rgba(244,163,0,0.25)', stroke: '#f4a300'}},
+        {id: 'c1l', type: 'label', position: {x: 595, y: 470}, props: {text: 'Start', color: '#f4a300'}},
+        {id: 'ar1', type: 'arrow', position: {x: 750, y: 460}, props: {from: {x: 0, y: 0}, to: {x: 110, y: 0}, color: '#38b6ff'}},
+        {id: 'c2', type: 'rectangle', position: {x: 890, y: 420}, props: {width: 180, height: 100, fill: 'rgba(56,182,255,0.22)', stroke: '#38b6ff'}},
+        {id: 'c2l', type: 'label', position: {x: 930, y: 455}, props: {text: 'Middle', color: '#38b6ff'}},
+        {id: 'ar2', type: 'arrow', position: {x: 1095, y: 460}, props: {from: {x: 0, y: 0}, to: {x: 110, y: 0}, color: '#3ddc97'}},
+        {id: 'c3', type: 'circle', position: {x: 1235, y: 420}, props: {radius: 90, fill: 'rgba(61,220,151,0.25)', stroke: '#3ddc97'}},
+        {id: 'c3l', type: 'label', position: {x: 1285, y: 470}, props: {text: 'End', color: '#3ddc97'}},
+      ],
+      animations: [
+        {id: 'x1', type: 'create', targetId: 'c1', startTime: 0.4, duration: 0.6},
+        {id: 'x2', type: 'drawArrow', targetId: 'ar1', startTime: 1.8, duration: 0.6},
+        {id: 'x3', type: 'create', targetId: 'c2', startTime: 2.6, duration: 0.6},
+        {id: 'x4', type: 'drawArrow', targetId: 'ar2', startTime: 4.0, duration: 0.6},
+        {id: 'x5', type: 'create', targetId: 'c3', startTime: 4.8, duration: 0.6},
+      ],
+      transition: {type: 'zoom', duration: 0.4},
+    },
+    {
       id: 'timeline',
       purpose: 'Horizontal process timeline with three steps',
       narration: `We can understand ${topic} step by step, just like following a journey.`,
@@ -96,6 +153,22 @@ export function buildMockPlan(input: LessonInput): AnimationPlan {
         {id: 's2a', type: 'fadeIn', targetId: 'note', startTime: 2.0, duration: 0.7},
       ],
       transition: {type: 'zoom', duration: 0.4},
+    },
+    {
+      id: 'recap',
+      purpose: 'Recap callout',
+      narration: `Great work. You have covered the key ideas, the steps and the tasks. Keep practising and you will master ${topic}.`,
+      duration: 8,
+      onScreenLabels: ['Recap'],
+      elements: [
+        {id: 'recap', type: 'highlightedText', position: {x: 560, y: 440}, props: {text: `🎓 You learned ${topic}`, fontSize: 52}},
+        {id: 'note2', type: 'infoCard', position: {x: 620, y: 570}, props: {title: 'Next', text: 'Try explaining it to a friend.', color: '#38b6ff'}},
+      ],
+      animations: [
+        {id: 'r1', type: 'fadeIn', targetId: 'recap', startTime: 0.3, duration: 0.8},
+        {id: 'r2', type: 'fadeIn', targetId: 'note2', startTime: 2.0, duration: 0.7},
+      ],
+      transition: {type: 'fade', duration: 0.3},
     },
   );
 

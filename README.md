@@ -25,9 +25,13 @@ Remotion           (src/engine)    → animated explainer (blocks, arrays, point
 > The flexible engine **produces videos in the style of a hand-built explainer
 > (array blocks, LOW/MID/HIGH pointers, process cards, equations, physics
 > diagrams)** — driven entirely by Groq's structured `AnimationPlan`, so ANY
-> topic renders rich animations instead of a fixed slideshow. If the model's
-> plan output ever fails validation, the pipeline falls back to the legacy
-> strict-lesson engine so a video is still produced.
+> topic renders rich animations instead of a fixed slideshow. **Video length is
+> flexible — it follows the topic and the real narration** (small topics
+> ~20-40 s, rich topics up to ~2 minutes; nothing is padded or force-cut).
+> Every plan is auto-enriched with section labels, decorative shapes and
+> entrance animations, narration is never clipped (audio headroom), and if the
+> plan still fails validation it falls back to the legacy strict-lesson engine
+> so a video is always produced.
 
 ## Scope
 
@@ -41,9 +45,16 @@ MIL verification system, authentication, database, or deployment.
 - **Flexible animation engine** `src/engine` ✅ (NEW — produces videos like a
   hand-made explainer, driven by Groq's `AnimationPlan` JSON)
   - ~40 reusable primitives: array blocks, pointers, equations, numbers line,
-    code blocks, physics objects/arrows, waves, info/step cards, …
-  - Timed animations (create, fadeIn, move, highlight, updateValue, drawArrow…)
-    and scene transitions; audio-synced master timeline
+    code blocks, physics objects/arrows, waves, info/step cards, progress-task
+    lists, …
+  - KINETIC animation engine: spring/bounce/blur entrances, cascade timing,
+    move / pan / scale / zoom / rotate / morph / highlight / updateValue /
+    drawArrow / hide actions, continuous idle motion (float/breathe/pulse),
+    per-scene camera drift, floating particles, punchy transitions
+  - AUTOMATIC CANVAS LAYOUT: every scene is clamped inside safe bounds
+    (cleared of labels/narration/footer), overlapping blocks are pushed apart,
+    and connector ARROWS are auto-drawn between related blocks in every scene
+  - Audio-synced master timeline; every scene fully animated by default
   - Verified end-to-end: Groq plan → TTS → audio sync → MP4 (`scripts/e2e-flexible.ts`)
   - Registered composition `EduVisionVideo` (binary-search demo as defaultProps)
 - Groq plan generator: `groq/planGenerator` + tolerant Zod validation
