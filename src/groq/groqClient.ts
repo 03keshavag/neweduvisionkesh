@@ -16,8 +16,8 @@ export class GroqConfigError extends Error {
   }
 }
 
-/** Model used when GROQ_MODEL is not set. Supports JSON output. */
-export const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
+/** Model used when GROQ_MODEL is not set. */
+export const DEFAULT_GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
 let cachedClient: Groq | null = null;
 

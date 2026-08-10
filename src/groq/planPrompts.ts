@@ -29,6 +29,7 @@ export const PLAN_ELEMENT_TYPES = [
   'numberLine',
   'geometricShape',
   'atom',
+  'molecule',
   'dnaStrand',
   'tangentLine',
   'array',
@@ -77,21 +78,32 @@ export const PLAN_ANIMATION_TYPES = [
   'morph',
 ] as const;
 
-/** Only a small sanity floor — video LENGTH is flexible and driven by topic. */
+/** Video length is flexible and driven by topic. */
 export const MIN_PLAN_SCENES = 4;
 export const MIN_PLAN_SECONDS = 20;
 
-const CONCEPT_FIRST_GUIDANCE = `CONCEPT-FIRST EDUCATIONAL VISUAL MODELING:
+const CONCEPT_FIRST_GUIDANCE = `CONCEPT-FIRST EDUCATIONAL VISUAL MODELING & STANDARDIZED CANVAS ZONES:
 You are an expert scientific animator (in the visual explanation spirit of 3Blue1Brown). For every topic, derive the visualization through:
 TOPIC → SUBJECT → CONCEPT → CONCEPTUAL MODEL → VARIABLES & RELATIONSHIPS → VISUAL DIAGRAM → ANIMATED TRANSFORMATION → EQUATIONS TIED TO PHENOMENON.
 
-Every movement must represent a physical or mathematical relationship. Never add random decorative shapes or floating cards.
+CANVAS ZONES (1920 x 1080):
+- Header Zone (y: 40 - 150, centered): Title and subtitle.
+- Left Panel (x: 60 - 320, y: 190 - 640): Progress steps, task checklists, or key principles.
+- Right Panel (x: 1620 - 1860, y: 180 - 640): Concept badges, metrics, or atom/color legends.
+- Main Visual Canvas (x: 340 - 1580, y: 180 - 680): Pure mathematical, physical, chemical, or algorithmic model. Keep this area free of overlapping text boxes.
+- Narration Box (y: 710 - 870, width: 70%, centered): The renderer automatically displays the scene's narration in a dedicated frosted glass box. DO NOT place elements in y >= 700.
+
+CONTINUOUS KINETIC ANIMATIONS:
+Animations MUST occur throughout the ENTIRE duration of each scene, not just in the first second:
+- Early (0.3s - 1.5s): Physical setup and main diagram entry.
+- Middle (1.5s - 6.5s): Continuous motion (e.g. projectile flying, molecules shaking/colliding, search interval shrinking, vectors resolving, tangent line rotating).
+- Late (5.5s - 10.0s): Resulting state, apex/range/product highlights, and governing mathematical equations.
 
 SUBJECT-SPECIFIC CANONICAL MODELS:
 
 1. PHYSICS:
 - Projectile Motion:
-  * Entities: trajectory (props: width 750, height 380, launchAngle: 45, showProjectile: true, showVelocity: true, showVelocityComponents: true, showGravity: true, showApex: true, showRange: true, ground: true), equation, label.
+  * Entities: trajectory (props: width 800, height 400, launchAngle: 45, showProjectile: true, showVelocity: true, showVelocityComponents: true, showGravity: true, showApex: true, showRange: true, ground: true), equation.
   * Progression:
     Scene 1: Setup — ground line, launch point, projectile at origin, initial velocity v₀ at angle θ.
     Scene 2: Velocity decomposition — resolve v₀ into horizontal component vx (constant) and vertical component vy.
@@ -103,27 +115,33 @@ SUBJECT-SPECIFIC CANONICAL MODELS:
 - Circular Motion: circle (orbit), physicsObject, radius vector, tangential velocityArrow, centripetal forceArrow pointing to center.
 - Waves: wave (props: amplitude, frequency), wavelength marker, particle oscillation.
 
-2. MATHEMATICS:
+2. CHEMISTRY:
+- Chemical Reactions (e.g. Combustion of Methane CH₄ + 2O₂ → CO₂ + 2H₂O):
+  * Scene 1 (Reactants): molecule (props: moleculeType: "CH4", size: 130), molecule (props: moleculeType: "O2", size: 120), balanced reactant equation.
+  * Scene 2 (Collision & Activation Energy): molecules shake (props: shaking: true), bonds break under activation energy.
+  * Scene 3 (Products): new product molecules form — molecule (props: moleculeType: "CO2"), molecule (props: moleculeType: "H2O"), energy released callout.
+  * Scene 4 (Summary & Energy): balanced reaction summary and energy profile (exothermic/endothermic).
+- Atomic Structure & Ionic Bonding: atom (props: elementSymbol, electronCount, valenceElectrons, charge, isPositiveIon, isNegativeIon). Electron transfer from metal to non-metal forming ionic bond.
+
+3. BIOLOGY:
+- DNA Replication: dnaStrand (props: strandSeparation, basePairs: ["A-T","G-C",...]); double helix unwinds/separates; complementary nucleotides attach to form two identical daughter strands.
+- Photosynthesis & Cellular Respiration: Inputs (H₂O + CO₂ + sunlight) transforming into glucose (C₆H₁₂O₆) + O₂.
+
+4. MATHEMATICS:
 - Quadratic Functions & Parabolas: coordinatePlane, functionCurve (parabola y = ax² + bx + c), vertex point, roots/intercepts.
 - Derivatives & Calculus: functionCurve, tangentLine (props: slope, label: "dy/dx = slope"), secant approaching tangent.
 - Pythagorean Theorem: geometricShape / right triangle, squares on legs a² and b², hypotenuse square c², equation a² + b² = c².
 - Vectors & Trigonometry: coordinatePlane, vector (props: from, to, label), component projections on x and y axes.
 
-3. CHEMISTRY:
-- Atomic Structure & Ions: atom (props: elementSymbol, electronCount, valenceElectrons, charge, isPositiveIon, isNegativeIon).
-- Ionic Bonding: Metal atom (e.g. Na, 1 valence electron) transfers electron to Non-metal (e.g. Cl, 7 valence electrons); Na becomes Na⁺, Cl becomes Cl⁻; electrostatic attraction forms ionic bond.
-- Covalent Bonding: Atoms share electron pairs in overlapping valence shells.
-- Chemical Reactions: Reactant molecules transform into product molecules with conservation of atoms.
-
-4. BIOLOGY:
-- DNA Replication: dnaStrand (props: strandSeparation, basePairs: ["A-T","G-C",...]); double helix unwinds/separates; complementary nucleotides attach to form two identical daughter strands.
-- Photosynthesis & Cellular Respiration: Chloroplast / leaf diagram, inputs (H₂O + CO₂ + sunlight) transforming into glucose (C₆H₁₂O₆) + O₂.
-- Cell Structure & Transport: Cell membrane, nucleus, organelles, molecules diffusing through membrane channels.
-
 5. COMPUTER SCIENCE:
 - Binary Search: array (props: values, lowIndex, midIndex, highIndex, eliminatedIndices), pointer. Highlight mid element, compare with target, eliminate half the search interval (dim eliminatedIndices), repeat until found.
 - Linked Lists / Trees / Graphs: node, edge, pointer, tree, graphVisual. Animate pointer traversals, node insertion/deletion.
-- Stacks & Queues: stack / queue with push / pop / enqueue / dequeue operations.`;
+- Stacks & Queues: stack / queue with push / pop / enqueue / dequeue operations.
+
+6. ELECTRICAL & ELECTRONICS ENGINEERING:
+- Electric Circuits & Ohm's Law (V = IR): circuitElement (props: componentType: "battery" | "resistor" | "capacitor"), current flow arrows along wires, voltage meter, equation V = I · R.
+- AC vs DC Signals: coordinatePlane, functionCurve (sine wave V(t) = V₀ sin(ωt) for AC vs constant horizontal line for DC), frequency and amplitude markers.
+- Logic Gates & Digital Logic: node, edge, truth table infoCard on left panel, animated 0/1 signal pulse traveling through AND/OR/NOT gates.`;
 
 /** Full system prompt (JSON template embedded). */
 export function buildPlanSystemPrompt(): string {
@@ -131,17 +149,15 @@ export function buildPlanSystemPrompt(): string {
 
 RULES:
 1. Respond with ONLY one JSON object. No markdown, no code fences, no commentary.
-2. Write ALL learner-facing text (narration, props.text/title/label, stepCard/taskList text) in the requested language. Element and action "id" values stay simple ASCII like "title", "traj", "arr", "ptr", "atom1".
-3. Canvas 1920 x 1080, fps 30. element.position is the TOP-LEFT corner and must stay inside the canvas. Keep the bottom ~140px clear for the narration subtitle.
-4. Produce ${MIN_PLAN_SCENES} to 10 SCENES — let the concept dictate the length. Rich, well-paced narrations produce full, clear videos (8-14s per scene).
-5. EDUCATIONAL RELEVANCE OVER DECORATIVE COMPLEXITY:
-   - Every scene must center around the canonical mathematical/scientific visual model for the topic.
-   - Animation MUST represent a relationship or physical process (e.g. ball moving along trajectory, electron transferring, interval shrinking, slope changing).
-   - Never add random floating cards, disconnected arrows, or arbitrary moving shapes.
-6. EQUATION ↔ VISUAL CONNECTION:
-   - Introduce equations only in direct visual connection to the physical or geometric quantities they describe.
-7. ${CONCEPT_FIRST_GUIDANCE}
-8. Return ONLY the JSON object shaped exactly like this template:
+2. Write ALL learner-facing text (narration, props.text/title/label, stepCard/taskList text) in the requested language. Element and action "id" values stay simple ASCII like "title", "traj", "arr", "mol1".
+3. Canvas 1920 x 1080, fps 30. Visual entities stay inside the Main Canvas (x: 340-1580, y: 180-680). Keep y >= 700 clear for the automated narration box.
+4. Produce comprehensive, deeply detailed animation plans (1000 to 3000 lines of structured JSON is encouraged). Rich, well-paced narrations produce full, clear videos (8-14s per scene, 4-10 scenes).
+5. EDUCATIONAL RELEVANCE & CONTINUOUS ANIMATION:
+   - Every scene must center around the canonical visual model for the topic.
+   - Animation MUST occur continuously across each scene (early entrance, mid-scene continuous kinematics/transformation, late-scene highlights & equations).
+   - Zero random floating cards or disconnected clutter.
+6. ${CONCEPT_FIRST_GUIDANCE}
+7. Return ONLY the JSON object shaped exactly like this template:
 ${PLAN_JSON_TEMPLATE}`;
 }
 

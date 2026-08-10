@@ -45,6 +45,7 @@ const REGISTRY: Record<ElementType, PrimitiveComponent> = {
   numberLine: MathP.NumberLine,
   geometricShape: MathP.GeometricShape,
   atom: Science.AtomPrimitive,
+  molecule: Science.Molecule,
   dnaStrand: Science.DnaStrand,
   tangentLine: Science.TangentLine,
   array: Cs.ArrayVisual,

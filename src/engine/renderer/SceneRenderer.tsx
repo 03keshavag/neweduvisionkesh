@@ -14,12 +14,37 @@ interface SceneRendererProps {
 
 type IdleKind = 'float' | 'breathe' | 'none';
 
-/** Deterministic per-element idle motion so scenes never look static. */
+const DIAGRAM_TYPES = new Set([
+  'coordinatePlane',
+  'graph',
+  'functionCurve',
+  'vector',
+  'numberLine',
+  'geometricShape',
+  'physicsObject',
+  'forceArrow',
+  'velocityArrow',
+  'accelerationArrow',
+  'trajectory',
+  'wave',
+  'particle',
+  'spring',
+  'circuitElement',
+  'atom',
+  'dnaStrand',
+  'tangentLine',
+  'equation',
+]);
+
+/** Deterministic per-element idle motion — disabled for exact scientific/math diagrams. */
 function idleForType(type: string): IdleKind {
+  if (DIAGRAM_TYPES.has(type)) {
+    return 'none';
+  }
   if (['title', 'label', 'highlightedText', 'stepCard', 'infoCard', 'taskList', 'progressSteps', 'variable'].includes(type)) {
     return 'float';
   }
-  if (['circle', 'rectangle', 'polygon', 'geometricShape', 'equation', 'node'].includes(type)) {
+  if (['circle', 'rectangle', 'polygon', 'node'].includes(type)) {
     return 'breathe';
   }
   return 'none';
@@ -27,12 +52,13 @@ function idleForType(type: string): IdleKind {
 
 /** Pure (no-hook) idle transform, safe to call inside element loops. */
 function idleStyle(kind: IdleKind, strength: number, phase: number, frame: number): React.CSSProperties {
+  if (kind === 'none') return {};
   const t = frame / 30;
   if (kind === 'float') {
-    return {transform: `translateY(${Math.sin(t * 1.7 + phase) * 7 * strength}px)`};
+    return {transform: `translateY(${Math.sin(t * 1.7 + phase) * 5 * strength}px)`};
   }
   if (kind === 'breathe') {
-    return {transform: `scale(${1 + Math.sin(t * 2.2 + phase) * 0.017 * strength})`};
+    return {transform: `scale(${1 + Math.sin(t * 2.2 + phase) * 0.012 * strength})`};
   }
   return {};
 }
@@ -204,6 +230,12 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({
           </div>
         ))}
         {sorted.map((element) => {
+          // If this is not the intro scene and the element is a generic title, suppress it
+          // so the entire 1920x1080 canvas belongs to the animated diagrams.
+          if (!isFirst && element.type === 'title') {
+            return null;
+          }
+
           const animated = applyAnimationState(element, scene.animations, localSeconds);
           const createAnim = scene.animations.find(
             (a) => a.targetId === element.id && (a.type === 'create' || a.type === 'show' || a.type === 'fadeIn'),
@@ -243,27 +275,50 @@ export const SceneRenderer: React.FC<SceneRendererProps> = ({
             </div>
           );
         })}
-        {!hasStepCard && scene.narration ? (
+        {scene.narration ? (
           <div
             style={{
               position: 'absolute',
-              left: '50%',
-              bottom: 56,
-              transform: 'translateX(-50%)',
+              left: '15%',
+              bottom: 80,
+              width: '70%',
+              background: 'rgba(10, 18, 32, 0.88)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: `1.5px solid rgba(56, 182, 255, 0.3)`,
+              borderRadius: 18,
+              padding: '18px 32px',
+              color: 'white',
+              boxSizing: 'border-box',
+              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.55)',
               opacity: subOpacity,
-              maxWidth: 1500,
-              background: 'rgba(7, 14, 24, 0.82)',
-              border: `1px solid ${COLORS.divider}`,
-              borderRadius: 16,
-              padding: '16px 30px',
-              fontFamily: FONTS.body,
-              color: '#eaf0f8',
-              fontSize: 28,
-              lineHeight: 1.45,
-              textAlign: 'center',
+              zIndex: 50,
             }}
           >
-            {scene.narration}
+            {scene.onScreenLabels?.[0] || scene.purpose ? (
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                  color: '#facc15',
+                  fontFamily: FONTS.body,
+                  marginBottom: 6,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {scene.onScreenLabels?.[0] || scene.purpose}
+              </div>
+            ) : null}
+            <div
+              style={{
+                fontSize: 22,
+                lineHeight: 1.45,
+                color: '#f8fafc',
+                fontFamily: FONTS.body,
+              }}
+            >
+              {scene.narration}
+            </div>
           </div>
         ) : null}
       </AbsoluteFill>

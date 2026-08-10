@@ -16,16 +16,19 @@ export const Title: React.FC<TextPrimitiveProps> = ({
   startFrame = 0,
   durationFrames = 20,
 }) => {
-  const anim = useElementAnimation(startFrame, durationFrames, 'bounce');
+  const anim = useElementAnimation(startFrame, durationFrames, 'fadeIn');
   return (
     <div
       style={{
         ...posStyle(position),
         ...baseTextStyle,
         ...anim,
-        fontSize: props.fontSize ?? 72,
+        fontSize: props.fontSize ?? 52,
         fontWeight: 700,
         color: props.color ?? COLORS.text,
+        textAlign: 'center',
+        maxWidth: 1600,
+        lineHeight: 1.2,
       }}
     >
       {props.text}
@@ -46,9 +49,10 @@ export const Label: React.FC<TextPrimitiveProps> = ({
         ...posStyle(position),
         ...baseTextStyle,
         ...anim,
-        fontSize: props.fontSize ?? 36,
+        fontSize: props.fontSize ?? 26,
         color: props.color ?? COLORS.textMuted,
         letterSpacing: '0.04em',
+        lineHeight: 1.3,
       }}
     >
       {props.text ?? props.label}
@@ -69,14 +73,17 @@ export const Equation: React.FC<TextPrimitiveProps> = ({
         ...posStyle(position),
         ...baseTextStyle,
         ...anim,
-        fontSize: props.fontSize ?? 56,
+        fontSize: props.fontSize ?? 36,
         fontWeight: 600,
         fontFamily: "'Cambria Math', 'Times New Roman', serif",
         color: props.color ?? COLORS.secondary,
-        padding: '12px 24px',
+        padding: '10px 24px',
         borderRadius: 12,
-        background: 'rgba(56, 182, 255, 0.08)',
-        border: `1px solid rgba(56, 182, 255, 0.25)`,
+        background: 'rgba(10, 20, 36, 0.85)',
+        border: `1.5px solid rgba(56, 182, 255, 0.35)`,
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        whiteSpace: 'nowrap',
+        display: 'inline-block',
       }}
     >
       {props.expression ?? props.text}

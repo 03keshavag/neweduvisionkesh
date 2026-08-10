@@ -201,6 +201,7 @@ const DIAGRAM_TYPES = new Set([
   'spring',
   'circuitElement',
   'atom',
+  'molecule',
   'dnaStrand',
   'tangentLine',
 ]);
@@ -210,21 +211,81 @@ function isPinnedOrDiagram(el: VisualElement): boolean {
 }
 
 /**
- * Fix overlaps for generic containers, deterministically:
- *   A. containers (cards/shapes/lists) pushed right/down against each other;
- *   B. text kept in place only when it is a caption INSIDE its container,
- *      otherwise pushed clear of containers AND other text.
- *   C. Scientific and mathematical diagram elements are protected and NEVER displaced.
+ * Fix overlaps for generic containers and ensure perfect canvas utilization:
+ *   A. Titles are hoisted to the top Header Zone (y: 45 - 110) so they never clash with diagrams.
+ *   B. Equations are placed on the horizontal equation band (y: 560 - 640).
+ *   C. Diagrams are protected and kept in the center stage (y: 160 - 540).
+ *   D. Side cards utilize left (x: 80 - 400) and right (x: 1500 - 1840) panels.
+ *   E. Everything is strictly kept above bottomClear (y <= 670) to prevent narration overlap.
  */
 function fixLayout(elements: VisualElement[], width: number, height: number, bottomClear: number): VisualElement[] {
   const out = elements.map((e) => ({...e, position: {...e.position}}));
 
-  // A. containers first (skip diagrams and pinned items).
+  // 1. Hoist any title to the top header band
+  for (const el of out) {
+    if (el.type === 'title') {
+      el.position.y = 50;
+      el.position.x = Math.max(100, (width - 700) / 2);
+    }
+  }
+
+  // 2. Position equations horizontally in the lower-middle band
+  const equations = out.filter((e) => e.type === 'equation');
+  equations.forEach((eq, idx) => {
+    if (equations.length === 1) {
+      eq.position.x = Math.max(120, (width - 640) / 2);
+      eq.position.y = 560;
+    } else {
+      const step = (width - 400) / equations.length;
+      eq.position.x = 200 + idx * step;
+      eq.position.y = 560;
+    }
+  });
+
+  // 3. Position side cards (infoCard / stepCard) to use left/right canvas width
+  const sideCards = out.filter((e) => e.type === 'infoCard' || e.type === 'stepCard');
+  if (sideCards.length >= 2) {
+    if (sideCards[0].position.x > 500 && sideCards[0].position.x < 1400) {
+      sideCards[0].position.x = 80;
+      sideCards[0].position.y = 220;
+    }
+    if (sideCards[1].position.x > 500 && sideCards[1].position.x < 1400) {
+      sideCards[1].position.x = width - 420;
+      sideCards[1].position.y = 220;
+    }
+  }
+
+  // 4. Anti-clumping pass for diagram elements (molecules, physics objects, vectors):
+  // If multiple elements are piled on the same coordinate (e.g. 3 molecules at x: 500),
+  // spread them evenly across the full 1920 canvas!
+  const diagrams = out.filter((e) => isPinnedOrDiagram(e) && e.type !== 'coordinatePlane' && e.type !== 'trajectory');
+  let needsSpread = false;
+  for (let i = 0; i < diagrams.length; i++) {
+    for (let j = i + 1; j < diagrams.length; j++) {
+      if (Math.abs(diagrams[i].position.x - diagrams[j].position.x) < 120 && Math.abs(diagrams[i].position.y - diagrams[j].position.y) < 120) {
+        needsSpread = true;
+        break;
+      }
+    }
+    if (needsSpread) break;
+  }
+  if (needsSpread && diagrams.length > 1) {
+    const total = diagrams.length;
+    const leftMargin = 220;
+    const rightMargin = width - 220;
+    const step = (rightMargin - leftMargin) / total;
+    diagrams.forEach((d, idx) => {
+      d.position.x = leftMargin + idx * step + 20;
+      d.position.y = 260;
+    });
+  }
+
+  // 5. Containers first (skip diagrams and pinned items).
   const placedC: Box[] = [];
   for (const el of out) {
     if (isDeco(el) || !BIG_TYPES.has(el.type)) continue;
     const b = boxOf(el, width, height);
-    if (isPinnedOrDiagram(el)) {
+    if (isPinnedOrDiagram(el) || el.type === 'title' || el.type === 'equation') {
       placedC.push({x: el.position.x, y: el.position.y, w: b.w, h: b.h});
       continue;
     }
@@ -233,10 +294,11 @@ function fixLayout(elements: VisualElement[], width: number, height: number, bot
     placedC.push({x: pos.x, y: pos.y, w: b.w, h: b.h});
   }
 
-  // B. text last (avoids containers and other text, respects diagrams).
+  // 5. Text last (avoids containers and other text, respects diagrams).
   const placedT: Box[] = [];
   for (const el of out) {
     if (isDeco(el) || !TEXTS.has(el.type)) continue;
+    if (el.type === 'title' || el.type === 'equation') continue;
     const b = boxOf(el, width, height);
     if (isPinnedOrDiagram(el)) {
       placedT.push({x: el.position.x, y: el.position.y, w: b.w, h: b.h});
@@ -260,6 +322,14 @@ function fixLayout(elements: VisualElement[], width: number, height: number, bot
     );
     el.position = {x: pos.x, y: pos.y};
     placedT.push({x: pos.x, y: pos.y, w: b.w, h: b.h});
+  }
+
+  // 6. Absolute clamp to bottomClear (670px) so NO element ever touches narration box
+  for (const el of out) {
+    const b = boxOf(el, width, height);
+    if (el.position.y + b.h > bottomClear) {
+      el.position.y = Math.max(130, bottomClear - b.h);
+    }
   }
 
   return out;
@@ -364,10 +434,8 @@ function enrichScene(
   width: number,
   height: number,
 ): AnimationScene {
-  // The narration bar occupies the bottom when there is no step/info card,
-  // so content must stay higher in that case.
-  const hasBottomCard = scene.elements.some((e) => e.type === 'stepCard' || e.type === 'infoCard');
-  const bottomClear = hasBottomCard ? height - 96 : height - 250;
+  // All content must stay strictly in y <= 670 to leave the lower band for narration.
+  const bottomClear = 670;
   const isScientificScene = scene.elements.some(isPinnedOrDiagram);
 
   // 1. Section label (top of frame).

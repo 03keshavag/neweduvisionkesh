@@ -25,6 +25,7 @@ export type ElementType =
   | 'infoCard'
   // Chemistry & Biology
   | 'atom'
+  | 'molecule'
   | 'dnaStrand'
   | 'tangentLine'
   // Shapes

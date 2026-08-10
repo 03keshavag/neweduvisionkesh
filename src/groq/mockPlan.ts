@@ -232,6 +232,122 @@ function buildProjectileMotionMockPlan(input: LessonInput): AnimationPlan {
   };
 }
 
+function buildChemicalReactionMockPlan(input: LessonInput): AnimationPlan {
+  const {language} = input;
+  const scenes: AnimationScene[] = [
+    {
+      id: 'reactants',
+      purpose: 'Reactants Present: Methane and Oxygen',
+      narration: 'We start with methane CH4 and two molecules of oxygen O2. The atoms are bonded together into stable reactant molecules.',
+      duration: 10,
+      onScreenLabels: ['Step 1: Reactants Present'],
+      elements: [
+        {id: 'title', type: 'title', position: {x: 620, y: 70}, props: {text: 'Combustion of Methane', fontSize: 64}},
+        {id: 'mol-ch4', type: 'molecule', position: {x: 600, y: 260}, props: {moleculeType: 'CH4', size: 160, label: 'Methane (CH₄)'}},
+        {id: 'plus', type: 'label', position: {x: 880, y: 320}, props: {text: '+', fontSize: 48, color: '#94a3b8'}},
+        {id: 'mol-o2a', type: 'molecule', position: {x: 1000, y: 280}, props: {moleculeType: 'O2', size: 130, label: 'Oxygen (O₂)'}},
+        {id: 'mol-o2b', type: 'molecule', position: {x: 1180, y: 280}, props: {moleculeType: 'O2', size: 130, label: 'Oxygen (O₂)'}},
+        {id: 'eq1', type: 'equation', position: {x: 680, y: 560}, props: {expression: 'CH₄ + 2 O₂  ⟶  Reactants', color: '#facc15', fontSize: 36}},
+      ],
+      animations: [
+        {id: 'r1', type: 'fadeIn', targetId: 'title', startTime: 0.3, duration: 0.6},
+        {id: 'r2', type: 'create', targetId: 'mol-ch4', startTime: 0.8, duration: 0.8},
+        {id: 'r3', type: 'fadeIn', targetId: 'plus', startTime: 1.6, duration: 0.5},
+        {id: 'r4', type: 'create', targetId: 'mol-o2a', startTime: 2.2, duration: 0.7},
+        {id: 'r5', type: 'create', targetId: 'mol-o2b', startTime: 2.8, duration: 0.7},
+        {id: 'r6', type: 'displayEquation', targetId: 'eq1', startTime: 4.2, duration: 0.7},
+      ],
+      transition: {type: 'fade', duration: 0.4},
+    },
+    {
+      id: 'collision',
+      purpose: 'Activation Energy: Bonds Break',
+      narration: 'Heat provides the activation energy. The C–H bonds in methane and the O=O bonds in oxygen vibrate intensely and break apart.',
+      duration: 10,
+      onScreenLabels: ['Step 2: Bonds Breaking'],
+      elements: [
+        {id: 'title2', type: 'title', position: {x: 620, y: 70}, props: {text: 'Activation Energy & Collision', fontSize: 60}},
+        {id: 'mol-ch4-shaking', type: 'molecule', position: {x: 600, y: 260}, props: {moleculeType: 'CH4', size: 160, shaking: true, label: 'C–H Bonds Breaking'}},
+        {id: 'spark', type: 'label', position: {x: 890, y: 310}, props: {text: '⚡', fontSize: 56, color: '#f59e0b'}},
+        {id: 'mol-o2a-shaking', type: 'molecule', position: {x: 1000, y: 280}, props: {moleculeType: 'O2', size: 130, shaking: true, label: 'O=O Breaking'}},
+        {id: 'mol-o2b-shaking', type: 'molecule', position: {x: 1180, y: 280}, props: {moleculeType: 'O2', size: 130, shaking: true, label: 'O=O Breaking'}},
+        {id: 'note-break', type: 'label', position: {x: 640, y: 560}, props: {text: 'Breaking old bonds requires input of activation energy', color: '#f87171', fontSize: 28}},
+      ],
+      animations: [
+        {id: 'c1', type: 'fadeIn', targetId: 'title2', startTime: 0.3, duration: 0.6},
+        {id: 'c2', type: 'fadeIn', targetId: 'mol-ch4-shaking', startTime: 0.8, duration: 0.6},
+        {id: 'c3', type: 'fadeIn', targetId: 'spark', startTime: 1.5, duration: 0.6},
+        {id: 'c4', type: 'fadeIn', targetId: 'mol-o2a-shaking', startTime: 1.8, duration: 0.6},
+        {id: 'c5', type: 'fadeIn', targetId: 'mol-o2b-shaking', startTime: 2.2, duration: 0.6},
+        {id: 'c6', type: 'fadeIn', targetId: 'note-break', startTime: 3.5, duration: 0.6},
+      ],
+      transition: {type: 'fade', duration: 0.4},
+    },
+    {
+      id: 'products',
+      purpose: 'New Bonds Form: CO2 and 2H2O',
+      narration: 'The separated carbon, oxygen, and hydrogen atoms rearrange into carbon dioxide and water molecules, releasing strong chemical energy.',
+      duration: 11,
+      onScreenLabels: ['Step 3: New Bonds Form'],
+      elements: [
+        {id: 'title3', type: 'title', position: {x: 620, y: 70}, props: {text: 'Product Molecules Formed', fontSize: 60}},
+        {id: 'mol-co2', type: 'molecule', position: {x: 580, y: 270}, props: {moleculeType: 'CO2', size: 170, label: 'Carbon Dioxide (CO₂)'}},
+        {id: 'plus2', type: 'label', position: {x: 880, y: 320}, props: {text: '+', fontSize: 48, color: '#94a3b8'}},
+        {id: 'mol-h2oa', type: 'molecule', position: {x: 1000, y: 260}, props: {moleculeType: 'H2O', size: 140, label: 'Water (H₂O)'}},
+        {id: 'mol-h2ob', type: 'molecule', position: {x: 1180, y: 260}, props: {moleculeType: 'H2O', size: 140, label: 'Water (H₂O)'}},
+        {id: 'flame', type: 'label', position: {x: 1360, y: 310}, props: {text: '🔥', fontSize: 52}},
+        {id: 'eq2', type: 'equation', position: {x: 680, y: 560}, props: {expression: '⟶  CO₂ + 2 H₂O + Energy (Heat & Light)', color: '#4ade80', fontSize: 34}},
+      ],
+      animations: [
+        {id: 'p1', type: 'fadeIn', targetId: 'title3', startTime: 0.3, duration: 0.6},
+        {id: 'p2', type: 'create', targetId: 'mol-co2', startTime: 0.8, duration: 0.8},
+        {id: 'p3', type: 'fadeIn', targetId: 'plus2', startTime: 1.6, duration: 0.5},
+        {id: 'p4', type: 'create', targetId: 'mol-h2oa', startTime: 2.2, duration: 0.7},
+        {id: 'p5', type: 'create', targetId: 'mol-h2ob', startTime: 2.8, duration: 0.7},
+        {id: 'p6', type: 'fadeIn', targetId: 'flame', startTime: 3.6, duration: 0.6},
+        {id: 'p7', type: 'displayEquation', targetId: 'eq2', startTime: 4.8, duration: 0.7},
+      ],
+      transition: {type: 'fade', duration: 0.4},
+    },
+    {
+      id: 'reaction-summary',
+      purpose: 'Balanced Reaction Equation & Exothermic Energy',
+      narration: 'In summary, chemical reactions never destroy atoms; they only rearrange chemical bonds. Because forming the new bonds releases surplus energy, this reaction is exothermic.',
+      duration: 12,
+      onScreenLabels: ['Summary: Balanced Reaction'],
+      elements: [
+        {id: 'title4', type: 'title', position: {x: 580, y: 70}, props: {text: 'Combustion of Methane — Summary', fontSize: 60}},
+        {id: 'full-eq', type: 'equation', position: {x: 560, y: 260}, props: {expression: 'CH₄ + 2 O₂  ⟶  CO₂ + 2 H₂O', color: '#facc15', fontSize: 46}},
+        {id: 'energy-box', type: 'infoCard', position: {x: 520, y: 380}, props: {title: 'Energy Released', text: '≈ 890 kJ/mol (Exothermic)', color: '#f97316'}},
+        {id: 'type-box', type: 'infoCard', position: {x: 1040, y: 380}, props: {title: 'Reaction Type', text: 'Combustion / Exothermic Oxidation', color: '#4ade80'}},
+        {id: 'law-label', type: 'label', position: {x: 560, y: 560}, props: {text: 'Conservation of Mass: 1 Carbon, 4 Hydrogen, 4 Oxygen on both sides', color: '#94a3b8', fontSize: 26}},
+      ],
+      animations: [
+        {id: 's1', type: 'fadeIn', targetId: 'title4', startTime: 0.3, duration: 0.6},
+        {id: 's2', type: 'displayEquation', targetId: 'full-eq', startTime: 1.0, duration: 0.8},
+        {id: 's3', type: 'fadeIn', targetId: 'energy-box', startTime: 2.2, duration: 0.6},
+        {id: 's4', type: 'fadeIn', targetId: 'type-box', startTime: 2.8, duration: 0.6},
+        {id: 's5', type: 'fadeIn', targetId: 'law-label', startTime: 4.0, duration: 0.6},
+      ],
+      transition: {type: 'fade', duration: 0.4},
+    },
+  ];
+
+  return {
+    id: 'mock-chemical-reaction-plan',
+    title: 'Chemical Reaction: Combustion of Methane — EduVision',
+    topic: input.topic,
+    subject: 'Chemistry',
+    language,
+    objective: 'Understand reactant bonds breaking, atom rearrangement, and product formation',
+    fps: 30,
+    width: 1920,
+    height: 1080,
+    totalDuration: scenes.reduce((acc, s) => acc + s.duration, 0),
+    scenes,
+  };
+}
+
 export function buildMockPlan(input: LessonInput): AnimationPlan {
   const {topic, language, ageGroup} = input;
   const t = topic.toLowerCase();
@@ -239,6 +355,11 @@ export function buildMockPlan(input: LessonInput): AnimationPlan {
   // If topic is projectile motion or trajectory, use the rich canonical physics model
   if (t.includes('projectile') || t.includes('parabola') || t.includes('trajectory')) {
     return buildProjectileMotionMockPlan(input);
+  }
+
+  // If topic is chemical reaction, combustion, or bonding, use canonical molecular model
+  if (t.includes('chemical') || t.includes('reaction') || t.includes('combustion') || t.includes('methane') || t.includes('molecule')) {
+    return buildChemicalReactionMockPlan(input);
   }
 
   const audience = ageGroup ? ` for ${ageGroup}` : '';

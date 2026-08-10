@@ -68,7 +68,7 @@ export const EduVisionVideo: React.FC<EduVisionVideoProps> = ({plan, timeline, a
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
       <Background />
-      <FloatingParticles />
+      {plan.subject === 'General' ? <FloatingParticles count={15} /> : null}
       <CompositionRenderer scenes={plan.scenes} timelineEntries={timeline.scenes} />
       {timeline.scenes.map((entry) => {
         const url = audio[entry.sceneId] ?? entry.audioUrl;
