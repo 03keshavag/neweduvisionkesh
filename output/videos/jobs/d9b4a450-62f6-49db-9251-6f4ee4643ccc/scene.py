@@ -1,10 +1,8 @@
-/**
- * Embedded Python Visual Primitives Library for Manim Community Edition.
- * These deterministic helper classes are injected into generated Manim scripts
- * to guarantee pixel-perfect, collision-free, subject-aware visualizations.
- */
+from manim import *
+import numpy as np
+import math
 
-export const PYTHON_PRIMITIVES_CODE = `
+
 # ==============================================================================
 # EDUVISION SUBJECT-AWARE DETERMINISTIC VISUAL PRIMITIVES LIBRARY
 # ==============================================================================
@@ -394,4 +392,158 @@ class OpticsVisualizer:
         normal = DashedLine(p, p + UP*3.2, color=GRAY_B, stroke_width=2)
         normal_lbl = Text("Normal", font_size=16, color=GRAY_B).next_to(normal.get_top(), UR, buff=0.1)
         return VGroup(mirror_line, hatches, normal, normal_lbl)
-`;
+
+
+from manim import *
+
+class AutoTeach(Scene):
+    def construct(self):
+        # -------------------------------------------------
+        # Common Header (remains throughout)
+        # -------------------------------------------------
+        header = LayoutManager.create_header(
+            "Law of Universal Gravitation",
+            "Understanding the force between two masses"
+        )
+        self.play(FadeIn(header, shift=UP), run_time=1.0)
+
+        # -------------------------------------------------
+        # Scene 1 – Setup & Frame of Reference (9.0 s)
+        # -------------------------------------------------
+        status1 = LayoutManager.create_status_bar(
+            "Earth and Moon: masses and distance set the stage"
+        )
+        self.play(FadeIn(status1, shift=DOWN), run_time=1.0)
+
+        # Earth sphere
+        earth = Circle(radius=0.8, color=BLUE_D).set_fill(BLUE_D, opacity=0.6)
+        earth_label = Text("Earth\n5.97e24 kg", font_size=24).next_to(earth, DOWN, buff=0.2)
+
+        # Moon sphere
+        moon = Circle(radius=0.4, color=GREY).set_fill(GREY, opacity=0.6)
+        moon.shift(RIGHT * 5)  # approximate distance visual
+        moon_label = Text("Moon\n7.35e22 kg", font_size=24).next_to(moon, DOWN, buff=0.2)
+
+        # Distance line
+        dist_line = Line(earth.get_right(), moon.get_left(), color=WHITE)
+        dist_label = Text("384,400 km", font_size=22).next_to(dist_line, UP, buff=0.2)
+
+        # Show Earth, Moon and labels
+        self.play(FadeIn(earth), FadeIn(moon), run_time=1.0)
+        self.play(FadeIn(earth_label), FadeIn(moon_label), run_time=1.0)
+        self.play(Create(dist_line), run_time=1.0)
+        self.play(FadeIn(dist_label), run_time=0.8)
+
+        # Wait for remainder of audio
+        self.wait(3.2)
+
+        # Cleanup temporary distance label (keep bodies for next scene)
+        self.play(FadeOut(dist_label), run_time=0.8)
+
+        # -------------------------------------------------
+        # Scene 2 – Animate Core Transformation (10.2 s)
+        # -------------------------------------------------
+        status2 = LayoutManager.create_status_bar(
+            "Gravity pulls both bodies toward each other"
+        )
+        self.play(ReplacementTransform(status1, status2), run_time=1.2)
+
+        # Force arrows (scaled arbitrarily for visual effect)
+        arrow_earth = Arrow(
+            start=earth.get_center(),
+            end=moon.get_center(),
+            buff=0.9,
+            color=YELLOW
+        )
+        arrow_moon = Arrow(
+            start=moon.get_center(),
+            end=earth.get_center(),
+            buff=0.5,
+            color=YELLOW
+        )
+        self.play(Create(arrow_earth), Create(arrow_moon), run_time=1.5)
+
+        # Labels for forces
+        label_fe = Text("F_Earth", font_size=20, color=YELLOW).next_to(arrow_earth, UP, buff=0.2)
+        label_fm = Text("F_Moon", font_size=20, color=YELLOW).next_to(arrow_moon, UP, buff=0.2)
+        self.play(FadeIn(label_fe), FadeIn(label_fm), run_time=1.0)
+
+        # Let viewer observe
+        self.wait(2.0)
+
+        # Emphasize arrows
+        self.play(Indicate(arrow_earth), Indicate(arrow_moon), run_time=0.8)
+
+        # Short pause
+        self.wait(1.0)
+
+        # Cleanup arrows and their labels
+        self.play(FadeOut(arrow_earth), FadeOut(arrow_moon),
+                  FadeOut(label_fe), FadeOut(label_fm), run_time=0.8)
+
+        # Remaining wait to match audio length
+        self.wait(1.9)
+
+        # -------------------------------------------------
+        # Scene 3 – Highlight Key Inflection (9.8 s)
+        # -------------------------------------------------
+        status3 = LayoutManager.create_status_bar(
+            "F = G·m₁·m₂ / r²"
+        )
+        self.play(ReplacementTransform(status2, status3), run_time=1.2)
+
+        # Formula display
+        formula = Text("F = G · m₁ · m₂ / r²", font_size=36)
+        self.play(FadeIn(formula, shift=UP), run_time=1.5)
+
+        # Highlight G
+        g_part = Text("G", font_size=36, color=RED).move_to(formula.get_center())
+        self.play(Indicate(g_part, scale_factor=1.5, color=RED), run_time=0.8)
+
+        # Highlight 1/r² term
+        inv_sq_part = Text("1 / r²", font_size=36, color=GREEN).move_to(formula.get_center())
+        self.play(Indicate(inv_sq_part, scale_factor=1.5, color=GREEN), run_time=0.8)
+
+        # Observe
+        self.wait(2.0)
+
+        # Fade out formula (will be recreated later)
+        self.play(FadeOut(formula), run_time=0.8)
+
+        # Remaining wait
+        self.wait(2.7)
+
+        # -------------------------------------------------
+        # Scene 4 – Present Summary (7.5 s)
+        # -------------------------------------------------
+        status4 = LayoutManager.create_status_bar(
+            "Summary: universal gravitation formula"
+        )
+        self.play(ReplacementTransform(status3, status4), run_time=1.2)
+
+        # Badge with formula
+        badge_bg = RoundedRectangle(width=6, height=2, corner_radius=0.3, fill_color=LIGHT_GREY, fill_opacity=0.8)
+        formula_badge = Text("F = G · m₁ · m₂ / r²", font_size=28).move_to(badge_bg.get_center())
+        badge = VGroup(badge_bg, formula_badge).to_edge(UP, buff=1.0)
+        self.play(FadeIn(badge, shift=DOWN), run_time=1.0)
+
+        # Recap text
+        recap = Text(
+            "Any two masses attract with a force given by this simple formula.",
+            font_size=24,
+            line_spacing=0.8
+        ).next_to(badge, DOWN, buff=0.6)
+        self.play(FadeIn(recap, shift=UP), run_time=1.0)
+
+        # Observe summary
+        self.wait(2.0)
+
+        # Fade out Earth and Moon bodies, keep formula badge
+        self.play(FadeOut(earth), FadeOut(moon),
+                  FadeOut(earth_label), FadeOut(moon_label), run_time=0.8)
+
+        # Final pause before ending
+        self.wait(1.5)
+
+        # Cleanup remaining temporary objects (status bar and header fade out)
+        self.play(FadeOut(status4), FadeOut(header), run_time=0.8)

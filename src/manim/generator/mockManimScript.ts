@@ -440,7 +440,50 @@ export function getMockManimScript(topic: string, sceneDurationSeconds: number =
 `);
   }
 
-  // 8. Default: Projectile Motion Kinematics (Physics Gold Standard)
+  // 8. Physics / Optics: Mirror Properties & Law of Reflection
+  if (t.includes('mirror') || t.includes('reflection') || t.includes('optics') || t.includes('refraction') || t.includes('light')) {
+    return wrapScript(`class AutoTeach(Scene):
+    def construct(self):
+        self.camera.background_color = "#070b14"
+
+        # 1. Header
+        header = LayoutManager.create_header("Law of Reflection & Mirror Properties", "Angle of Incidence (θi) = Angle of Reflection (θr)")
+        self.play(FadeIn(header), run_time=1.2)
+
+        # 2. Plane Mirror & Normal Line
+        mirror_grp = OpticsVisualizer.create_plane_mirror(length=7.5, position=DOWN*1.0)
+        self.play(Create(mirror_grp[0]), Create(mirror_grp[1]), run_time=1.5)
+        self.play(Create(mirror_grp[2]), Write(mirror_grp[3]), run_time=1.2)
+        self.wait(1.0)
+
+        # 3. Incident Ray (θi = 40°)
+        hit_pt = DOWN * 1.0
+        inc_start = hit_pt + np.array([-3.2, 3.2, 0])
+        inc_ray = Arrow(inc_start, hit_pt, color=YELLOW, buff=0, stroke_width=4)
+        inc_lbl = Text("Incident Ray (θi = 45°)", font_size=18, color=YELLOW).next_to(inc_start, UP, buff=0.1)
+
+        status_inc = LayoutManager.create_status_bar("Step 1: Light ray strikes the mirror surface at point of incidence", color=YELLOW)
+        self.play(GrowArrow(inc_ray), Write(inc_lbl), Write(status_inc), run_time=1.8)
+        self.wait(1.0)
+
+        # 4. Reflected Ray (θr = θi = 40°)
+        ref_end = hit_pt + np.array([3.2, 3.2, 0])
+        ref_ray = Arrow(hit_pt, ref_end, color=ORANGE, buff=0, stroke_width=4)
+        ref_lbl = Text("Reflected Ray (θr = 45°)", font_size=18, color=ORANGE).next_to(ref_end, UP, buff=0.1)
+
+        status_ref = LayoutManager.create_status_bar("Step 2: Ray reflects symmetrically: Angle of Incidence = Angle of Reflection", color=GREEN)
+        self.play(GrowArrow(ref_ray), Write(ref_lbl), ReplacementTransform(status_inc, status_ref), run_time=1.8)
+        self.wait(1.0)
+
+        # 5. Virtual Image Behind Mirror
+        status_virtual = LayoutManager.create_status_bar("✓ Plane Mirror Properties: Virtual, Upright, Same Size, Equidistant", color=BLUE_B)
+        self.play(ReplacementTransform(status_ref, status_virtual), run_time=1.5)
+        self.play(Circumscribe(mirror_grp[0], color=GREEN), run_time=1.8)
+        self.wait(2.0)
+`);
+  }
+
+  // 9. Default: Projectile Motion Kinematics (Physics Gold Standard)
   return wrapScript(`class AutoTeach(Scene):
     def construct(self):
         self.camera.background_color = "#070b14"

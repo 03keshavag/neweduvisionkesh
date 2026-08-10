@@ -1,10 +1,8 @@
-/**
- * Embedded Python Visual Primitives Library for Manim Community Edition.
- * These deterministic helper classes are injected into generated Manim scripts
- * to guarantee pixel-perfect, collision-free, subject-aware visualizations.
- */
+from manim import *
+import numpy as np
+import math
 
-export const PYTHON_PRIMITIVES_CODE = `
+
 # ==============================================================================
 # EDUVISION SUBJECT-AWARE DETERMINISTIC VISUAL PRIMITIVES LIBRARY
 # ==============================================================================
@@ -394,4 +392,107 @@ class OpticsVisualizer:
         normal = DashedLine(p, p + UP*3.2, color=GRAY_B, stroke_width=2)
         normal_lbl = Text("Normal", font_size=16, color=GRAY_B).next_to(normal.get_top(), UR, buff=0.1)
         return VGroup(mirror_line, hatches, normal, normal_lbl)
-`;
+
+
+from manim import *
+
+class AutoTeach(Scene):
+    def construct(self):
+        # -------------------- Scene 1 --------------------
+        # Header
+        header = Text("Plane Mirror Reflection", font_size=36).to_edge(UP, buff=0.3)
+        self.play(FadeIn(header, shift=UP), run_time=1.0)
+
+        # Mirror (vertical line at x=0)
+        mirror = Line(UP * 4, DOWN * 4, color=WHITE).shift(RIGHT * 0)
+        self.play(Create(mirror, run_time=1.5))
+
+        # Object (arrow‑shaped dot)
+        obj = Dot(point=LEFT * 3 + DOWN * 3, radius=0.15, color=BLUE)
+        self.play(FadeIn(obj, run_time=0.8))
+
+        # Incident ray (45° towards the mirror, hitting at the origin)
+        inc_ray = Line(start=obj.get_center(), end=ORIGIN, color=YELLOW)
+        self.play(Create(inc_ray, run_time=1.5))
+
+        # Normal line at point of incidence
+        normal = Line(start=ORIGIN + LEFT * 0.5, end=ORIGIN + RIGHT * 0.5, color=GREEN)
+        self.play(Create(normal, run_time=0.8))
+
+        # Angle arc showing 45° (incident side)
+        inc_arc = Arc(
+            radius=0.8,
+            start_angle=PI,
+            angle=-PI / 4,
+            color=RED,
+        ).move_to(ORIGIN)
+        self.play(Create(inc_arc, run_time=0.8))
+
+        # Wait for the rest of the audio time
+        self.wait(4.7)  # 1.0+1.5+0.8+1.5+0.8+0.8 = 6.4 ; 11.1‑6.4 = 4.7
+
+        # -------------------- Scene 2 --------------------
+        # Reflected ray (mirrors the incident angle)
+        refl_ray = Line(start=ORIGIN, end=RIGHT * 3 + DOWN * 3, color=YELLOW)
+        self.play(Create(refl_ray, run_time=1.5))
+
+        # Angle arc on reflected side
+        refl_arc = Arc(
+            radius=0.8,
+            start_angle=0,
+            angle=PI / 4,
+            color=RED,
+        ).move_to(ORIGIN)
+        self.play(Create(refl_arc, run_time=0.8))
+
+        # Equality label
+        eq_label = Text("θᵢ = θᵣ", font_size=30, color=WHITE).next_to(normal, UP, buff=0.2)
+        self.play(FadeIn(eq_label, shift=UP), run_time=1.0)
+
+        # Wait for remaining audio time
+        self.wait(7.1)  # 1.5+0.8+1.0 = 3.3 ; 10.4‑3.3 = 7.1
+
+        # -------------------- Scene 3 --------------------
+        # Dashed extension of the reflected ray (virtual ray)
+        dashed_ray = DashedLine(start=ORIGIN, end=RIGHT * 3 + DOWN * 3, color=YELLOW)
+        self.play(Create(dashed_ray, run_time=1.0))
+
+        # Virtual image point
+        img = Dot(point=RIGHT * 3 + DOWN * 3, radius=0.15, color=ORANGE)
+        self.play(FadeIn(img, run_time=0.8))
+
+        # Image label
+        img_label = Text("Virtual Image", font_size=28, color=ORANGE).next_to(img, RIGHT, buff=0.2)
+        self.play(Write(img_label, run_time=0.8))
+
+        # Wait for remaining audio time
+        self.wait(6.3)  # 1.0+0.8+0.8 = 2.6 ; 8.9‑2.6 = 6.3
+
+        # -------------------- Scene 4 --------------------
+        # Gather all temporary objects to fade out together
+        temp_group = VGroup(
+            mirror, obj, inc_ray, normal, inc_arc,
+            refl_ray, refl_arc, eq_label,
+            dashed_ray, img, img_label,
+        )
+        self.play(FadeOut(temp_group, run_time=1.0))
+
+        # Summary badge (a rectangle with two lines of text)
+        badge_bg = Rectangle(width=6, height=2.5, color=WHITE, fill_opacity=0.2)
+        line1 = Text("θᵢ = θᵣ", font_size=32, color=WHITE)
+        line2 = Text("Virtual Image = Object distance behind mirror", font_size=24, color=WHITE)
+        line2.scale(0.9)
+        line2.next_to(line1, DOWN, buff=0.3)
+        badge = VGroup(badge_bg, line1, line2).move_to(DOWN * 1.5)
+
+        self.play(FadeIn(badge, run_time=1.0))
+
+        # Pulse effect
+        self.play(badge.animate.scale(1.05), run_time=0.5)
+        self.play(badge.animate.scale(1/1.05), run_time=0.5)
+
+        # Wait for the rest of the audio
+        self.wait(10.0)  # 1.0+1.0+0.5+0.5 = 3.0 ; 13.0‑3.0 = 10.0
+
+        # Clean up summary badge (optional, prepares for possible next scenes)
+        self.play(FadeOut(badge, run_time=0.8))

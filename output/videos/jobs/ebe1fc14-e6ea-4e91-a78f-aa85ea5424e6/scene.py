@@ -1,24 +1,10 @@
-/**
- * Embedded Python Visual Primitives Library for Manim Community Edition.
- * These deterministic helper classes are injected into generated Manim scripts
- * to guarantee pixel-perfect, collision-free, subject-aware visualizations.
- */
+from manim import *
+import numpy as np
 
-export const PYTHON_PRIMITIVES_CODE = `
+
 # ==============================================================================
 # EDUVISION SUBJECT-AWARE DETERMINISTIC VISUAL PRIMITIVES LIBRARY
 # ==============================================================================
-import math
-
-# Vector & coordinate safety helpers
-def vec3(x, y=0.0, z=0.0):
-    """Guarantees a 3D float NumPy vector for Manim positioning."""
-    return np.array([float(x), float(y), float(z)])
-
-def deg_to_vec(degrees, length=1.0):
-    """Creates a 3D unit direction vector from an angle in degrees."""
-    rad = np.radians(degrees)
-    return np.array([length * np.cos(rad), length * np.sin(rad), 0.0])
 
 # Color safety aliases for commonly generated color names
 LIGHT_GREEN = GREEN_B
@@ -35,7 +21,6 @@ CYAN = TEAL
 MAGENTA = PINK
 PURPLE_A = PURPLE
 PURPLE_B = PURPLE
-
 
 class LayoutManager:
     """Manages screen safe zones and auto-scales groups to prevent edge overflow."""
@@ -383,15 +368,64 @@ class MatrixVisualizer:
         return VGroup(grid, brackets)
 
 
-class OpticsVisualizer:
-    """Deterministic Optics & Mirror Reflection Visualizer."""
-    @staticmethod
-    def create_plane_mirror(length=8.0, position=DOWN*0.5, *args, **kwargs):
-        p = position
-        mirror_line = Line(p + LEFT*(length/2), p + RIGHT*(length/2), color=BLUE_B, stroke_width=4)
-        hatch_points = np.linspace(p + LEFT*(length/2), p + RIGHT*(length/2), int(length * 3))
-        hatches = VGroup(*[Line(pt, pt + DL*0.2, color=GRAY, stroke_width=2) for pt in hatch_points])
-        normal = DashedLine(p, p + UP*3.2, color=GRAY_B, stroke_width=2)
-        normal_lbl = Text("Normal", font_size=16, color=GRAY_B).next_to(normal.get_top(), UR, buff=0.1)
-        return VGroup(mirror_line, hatches, normal, normal_lbl)
-`;
+class AutoTeach(Scene):
+    def construct(self):
+        self.camera.background_color = "#070b14"
+
+        # 1. Header
+        header = LayoutManager.create_header("Projectile Motion Kinematics", "2D Motion Under Constant Downward Gravity")
+        self.play(FadeIn(header), run_time=1.2)
+
+        # 2. Canvas & Ground
+        axes, ground = KinematicsVisualizer.create_canvas(10, 6)
+        origin_lbl = Text("(0,0)", font_size=16, color=GRAY).next_to(axes.c2p(0, 0), DL, buff=0.1)
+        self.play(Create(axes), Create(ground), Write(origin_lbl), run_time=1.5)
+
+        # 3. Launch Vector
+        v0_val = 3.2
+        theta_rad = np.radians(50)
+        v0x = v0_val * np.cos(theta_rad)
+        v0y = v0_val * np.sin(theta_rad)
+
+        launch_pt = axes.c2p(0, 0)
+        ball = Dot(launch_pt, color=YELLOW, radius=0.12)
+        v0_arrow = Arrow(launch_pt, axes.c2p(v0x, v0y), color=YELLOW, buff=0, stroke_width=4)
+        v0_lbl = Text("v₀ (50°)", font_size=18, color=YELLOW).next_to(v0_arrow.get_end(), UR, buff=0.1)
+
+        self.play(FadeIn(ball), GrowArrow(v0_arrow), Write(v0_lbl), run_time=1.5)
+        self.wait(0.8)
+
+        # 4. Trajectory Simulation
+        g = 9.8
+        t_flight = 2 * v0y / (g * 0.22)
+        t_tracker = ValueTracker(0.0)
+
+        def traj_pos(t):
+            x = v0x * t * 2.2
+            y = (v0y * t - 0.5 * (g * 0.22) * t**2) * 2.2
+            return axes.c2p(max(0, x), max(0, y))
+
+        moving_ball = always_redraw(lambda: Dot(traj_pos(t_tracker.get_value()), color=YELLOW, radius=0.12))
+        path = TracedPath(moving_ball.get_center, stroke_color=YELLOW_C, stroke_width=3.5)
+        g_arrow = always_redraw(lambda: Arrow(traj_pos(t_tracker.get_value()), traj_pos(t_tracker.get_value()) + DOWN * 0.8, color=RED_B, buff=0, stroke_width=3))
+
+        self.add(moving_ball, path, g_arrow)
+        self.play(FadeOut(v0_arrow), FadeOut(v0_lbl), run_time=0.8)
+
+        # Animate to Apex
+        t_apex = v0y / (g * 0.22)
+        status_apex = LayoutManager.create_status_bar("Apex H: Vertical velocity vy = 0 | H = v₀y² / (2g)", color=GREEN)
+        self.play(t_tracker.animate.set_value(t_apex), Write(status_apex), run_time=2.5, rate_func=linear)
+        self.wait(0.8)
+
+        # Descent to Landing & Range
+        status_range = LayoutManager.create_status_bar("✓ Landed: Total Range R = v₀² · sin(2θ) / g", color=BLUE_B)
+        self.play(t_tracker.animate.set_value(t_flight), ReplacementTransform(status_apex, status_range), run_time=2.5, rate_func=linear)
+
+        land_pt = traj_pos(t_flight)
+        range_line = Line(axes.c2p(0, 0), land_pt, color=BLUE_B, stroke_width=4)
+        range_brace = Brace(range_line, DOWN, buff=0.15)
+        range_lbl = Text("Range R", font_size=16, color=BLUE_B).next_to(range_brace, DOWN, buff=0.08)
+
+        self.play(Create(range_brace), Write(range_lbl), run_time=1.5)
+        self.wait(2.0)

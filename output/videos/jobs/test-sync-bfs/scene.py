@@ -1,24 +1,13 @@
-/**
- * Embedded Python Visual Primitives Library for Manim Community Edition.
- * These deterministic helper classes are injected into generated Manim scripts
- * to guarantee pixel-perfect, collision-free, subject-aware visualizations.
- */
+from manim import *
+import numpy as np
 
-export const PYTHON_PRIMITIVES_CODE = `
+from manim import *
+import numpy as np
+
+
 # ==============================================================================
 # EDUVISION SUBJECT-AWARE DETERMINISTIC VISUAL PRIMITIVES LIBRARY
 # ==============================================================================
-import math
-
-# Vector & coordinate safety helpers
-def vec3(x, y=0.0, z=0.0):
-    """Guarantees a 3D float NumPy vector for Manim positioning."""
-    return np.array([float(x), float(y), float(z)])
-
-def deg_to_vec(degrees, length=1.0):
-    """Creates a 3D unit direction vector from an angle in degrees."""
-    rad = np.radians(degrees)
-    return np.array([length * np.cos(rad), length * np.sin(rad), 0.0])
 
 # Color safety aliases for commonly generated color names
 LIGHT_GREEN = GREEN_B
@@ -35,7 +24,6 @@ CYAN = TEAL
 MAGENTA = PINK
 PURPLE_A = PURPLE
 PURPLE_B = PURPLE
-
 
 class LayoutManager:
     """Manages screen safe zones and auto-scales groups to prevent edge overflow."""
@@ -383,15 +371,59 @@ class MatrixVisualizer:
         return VGroup(grid, brackets)
 
 
-class OpticsVisualizer:
-    """Deterministic Optics & Mirror Reflection Visualizer."""
-    @staticmethod
-    def create_plane_mirror(length=8.0, position=DOWN*0.5, *args, **kwargs):
-        p = position
-        mirror_line = Line(p + LEFT*(length/2), p + RIGHT*(length/2), color=BLUE_B, stroke_width=4)
-        hatch_points = np.linspace(p + LEFT*(length/2), p + RIGHT*(length/2), int(length * 3))
-        hatches = VGroup(*[Line(pt, pt + DL*0.2, color=GRAY, stroke_width=2) for pt in hatch_points])
-        normal = DashedLine(p, p + UP*3.2, color=GRAY_B, stroke_width=2)
-        normal_lbl = Text("Normal", font_size=16, color=GRAY_B).next_to(normal.get_top(), UR, buff=0.1)
-        return VGroup(mirror_line, hatches, normal, normal_lbl)
-`;
+class AutoTeach(Scene):
+    def construct(self):
+        self.camera.background_color = "#070b14"
+
+        # 1. Header
+        header = LayoutManager.create_header("Breadth-First Search (BFS)", "Level-by-Level Graph Exploration")
+        self.play(FadeIn(header), run_time=1.2)
+
+        # 2. Deterministic Graph
+        positions = {
+            "A": np.array([-3.5, 1.2, 0]),
+            "B": np.array([-1.2, 1.8, 0]),
+            "C": np.array([-1.2, 0.4, 0]),
+            "D": np.array([1.2, 2.0, 0]),
+            "E": np.array([1.2, 0.8, 0]),
+            "F": np.array([3.5, 1.2, 0]),
+        }
+        edges = [("A", "B"), ("A", "C"), ("B", "D"), ("B", "E"), ("C", "E"), ("D", "F"), ("E", "F")]
+        graph = GraphVisualizer(positions, edges)
+
+        self.play(FadeIn(graph.get_group()), run_time=1.8)
+        self.wait(1.0)
+
+        # 3. Queue & Traversal State
+        status_q = LayoutManager.create_status_bar("Queue: [ A ] | Visited: { A }", color=YELLOW)
+        self.play(Write(status_q), graph.set_visited("A", GREEN), run_time=1.5)
+        self.wait(1.0)
+
+        # Discover Level 1 (B, C)
+        status_l1 = LayoutManager.create_status_bar("Queue: [ B, C ] | Visited: { A, B, C }", color=YELLOW)
+        self.play(
+            graph.set_visited("B", GREEN_B),
+            graph.set_visited("C", GREEN_B),
+            ReplacementTransform(status_q, status_l1),
+            run_time=1.8
+        )
+        self.wait(1.0)
+
+        # Discover Level 2 (D, E)
+        status_l2 = LayoutManager.create_status_bar("Queue: [ D, E ] | Visited: { A, B, C, D, E }", color=YELLOW)
+        self.play(
+            graph.set_visited("D", GREEN_B),
+            graph.set_visited("E", GREEN_B),
+            ReplacementTransform(status_l1, status_l2),
+            run_time=1.8
+        )
+        self.wait(1.0)
+
+        # Discover F
+        status_done = LayoutManager.create_status_bar("✓ Traversal Order: A ⟶ B ⟶ C ⟶ D ⟶ E ⟶ F in O(V + E) Time", color=GREEN)
+        self.play(
+            graph.set_visited("F", GREEN_A),
+            ReplacementTransform(status_l2, status_done),
+            run_time=1.8
+        )
+        self.wait(2.0)

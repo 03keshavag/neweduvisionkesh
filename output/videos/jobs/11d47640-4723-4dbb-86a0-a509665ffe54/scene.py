@@ -1,10 +1,8 @@
-/**
- * Embedded Python Visual Primitives Library for Manim Community Edition.
- * These deterministic helper classes are injected into generated Manim scripts
- * to guarantee pixel-perfect, collision-free, subject-aware visualizations.
- */
+from manim import *
+import numpy as np
+import math
 
-export const PYTHON_PRIMITIVES_CODE = `
+
 # ==============================================================================
 # EDUVISION SUBJECT-AWARE DETERMINISTIC VISUAL PRIMITIVES LIBRARY
 # ==============================================================================
@@ -394,4 +392,121 @@ class OpticsVisualizer:
         normal = DashedLine(p, p + UP*3.2, color=GRAY_B, stroke_width=2)
         normal_lbl = Text("Normal", font_size=16, color=GRAY_B).next_to(normal.get_top(), UR, buff=0.1)
         return VGroup(mirror_line, hatches, normal, normal_lbl)
-`;
+
+
+from manim import *
+import numpy as np
+
+class AutoTeach(Scene):
+    def construct(self):
+        # ---------- Header ----------
+        header = Text("Pigeonhole Principle", font_size=36).to_edge(UP, buff=0.3)
+        self.play(FadeIn(header), run_time=1.0)
+
+        # ---------- Scene 1 : Setup ----------
+        # Pigeons (dots with labels)
+        pigeon_positions = [
+            np.array([-4, 1.5, 0]),
+            np.array([-2, 1.5, 0]),
+            np.array([0, 1.5, 0]),
+            np.array([2, 1.5, 0]),
+            np.array([4, 1.5, 0]),
+        ]
+        pigeons = VGroup()
+        for i, pos in enumerate(pigeon_positions, start=1):
+            dot = Dot(point=pos, radius=0.15, color=BLUE)
+            label = Text(f"P{i}", font_size=24).next_to(dot, DOWN, buff=0.1)
+            pigeons.add(VGroup(dot, label))
+        self.play(Create(pigeons), run_time=1.5)
+
+        # Holes (circles with labels)
+        hole_positions = [
+            np.array([-3, -1.5, 0]),
+            np.array([-1, -1.5, 0]),
+            np.array([1, -1.5, 0]),
+            np.array([3, -1.5, 0]),
+        ]
+        holes = VGroup()
+        for i, pos in enumerate(hole_positions, start=1):
+            circ = Circle(radius=0.5, color=GREEN).move_to(pos)
+            label = Text(f"H{i}", font_size=24).next_to(circ, DOWN, buff=0.1)
+            holes.add(VGroup(circ, label))
+        self.play(Create(holes), run_time=1.5)
+
+        # Status bar
+        status1 = Text("Setup: 5 pigeons, 4 holes", font_size=24).to_edge(DOWN, buff=0.5)
+        self.play(FadeIn(status1), run_time=1.0)
+
+        self.wait(3.7)  # total 8.7 s for Scene 1
+
+        # ---------- Scene 2 : Assignments ----------
+        # Record original positions for arrows
+        orig_positions = [p[0].get_center() for p in pigeons]
+
+        # Mapping pigeons → holes (last two share the same hole)
+        target_holes = [
+            holes[0][0].get_center(),
+            holes[1][0].get_center(),
+            holes[2][0].get_center(),
+            holes[3][0].get_center(),
+            holes[3][0].get_center(),
+        ]
+
+        # Move pigeons to their chosen holes
+        move_anims = []
+        for i, pigeon in enumerate(pigeons):
+            dot = pigeon[0]
+            move_anims.append(dot.animate.move_to(target_holes[i]))
+        self.play(*move_anims, run_time=2.5)
+
+        # Draw arrows from original positions to chosen holes
+        arrows = VGroup()
+        for start, end in zip(orig_positions, target_holes):
+            arrow = Arrow(start=start, end=end, buff=0.1, color=YELLOW)
+            arrows.add(arrow)
+        self.play(Create(arrows), run_time=2.0)
+
+        # Update status
+        status2 = Text("Each pigeon chooses a hole", font_size=24).to_edge(DOWN, buff=0.5)
+        self.play(ReplacementTransform(status1, status2), run_time=1.0)
+
+        self.wait(4.0)  # total 9.5 s for Scene 2
+
+        # ---------- Scene 3 : Highlight ----------
+        overlapping_hole = holes[3][0]  # fourth hole (shared)
+        self.play(Circumscribe(overlapping_hole, color=YELLOW), run_time=1.5)
+
+        badge = Text("n > m ⇒ ∃ hole with ≥2 items", font_size=28, color=RED)
+        badge.to_corner(UR, buff=0.5)
+        self.play(FadeIn(badge), run_time=1.5)
+
+        status3 = Text("At least one hole holds ≥2 pigeons", font_size=24).to_edge(DOWN, buff=0.5)
+        self.play(ReplacementTransform(status2, status3), run_time=1.0)
+
+        self.wait(5.4)  # total 9.4 s for Scene 3
+
+        # ---------- Scene 4 : Summary & Applications ----------
+        # Fade out pigeons and arrows, keep holes, badge, and status
+        pigeons_and_arrows = VGroup(pigeons, arrows)
+        self.play(FadeOut(pigeons_and_arrows), run_time=1.5)
+
+        # Bullet list of applications
+        bullet_texts = [
+            "• Birthday paradox",
+            "• Sock matching",
+            "• Hash collisions",
+        ]
+        bullets = VGroup()
+        for i, line in enumerate(bullet_texts):
+            txt = Text(line, font_size=24)
+            txt.next_to(badge, DOWN, buff=0.3 + i * 0.5)
+            bullets.add(txt)
+        self.play(FadeIn(bullets), run_time=2.0)
+
+        # Fade out temporary list and status, keep badge as final visual
+        self.play(FadeOut(bullets), FadeOut(status3), run_time=1.0)
+
+        self.wait(4.0)  # total 8.5 s for Scene 4
+
+        # Clean up header at the very end (optional)
+        self.play(FadeOut(header), run_time=0.8)

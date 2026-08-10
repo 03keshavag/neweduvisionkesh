@@ -1,10 +1,8 @@
-/**
- * Embedded Python Visual Primitives Library for Manim Community Edition.
- * These deterministic helper classes are injected into generated Manim scripts
- * to guarantee pixel-perfect, collision-free, subject-aware visualizations.
- */
+from manim import *
+import numpy as np
+import math
 
-export const PYTHON_PRIMITIVES_CODE = `
+
 # ==============================================================================
 # EDUVISION SUBJECT-AWARE DETERMINISTIC VISUAL PRIMITIVES LIBRARY
 # ==============================================================================
@@ -394,4 +392,211 @@ class OpticsVisualizer:
         normal = DashedLine(p, p + UP*3.2, color=GRAY_B, stroke_width=2)
         normal_lbl = Text("Normal", font_size=16, color=GRAY_B).next_to(normal.get_top(), UR, buff=0.1)
         return VGroup(mirror_line, hatches, normal, normal_lbl)
-`;
+
+
+from manim import *
+import numpy as np
+
+
+class AutoTeach(Scene):
+    # --------------------------------------------------------------------
+    # Scene 1: Title, axes setup
+    # --------------------------------------------------------------------
+    def scene1(self):
+        # Header
+        header = LayoutManager.create_header(
+            "Exponential Function eˣ", "Understanding the curve"
+        )
+        self.play(FadeIn(header, shift=UP), run_time=1.2)
+
+        # Axes in main stage zone
+        axes = Axes(
+            x_range=[-3, 3, 1],
+            y_range=[0, 20, 5],
+            x_length=10,
+            y_length=6,
+        ).shift(DOWN * 0.5)
+        axes_labels = VGroup(
+            Text("x", font_size=24).next_to(axes.x_axis, DOWN, buff=0.3),
+            Text("y", font_size=24).next_to(axes.y_axis, LEFT, buff=0.3),
+        )
+        self.play(Create(axes), run_time=1.5)
+        self.play(FadeIn(axes_labels, shift=DOWN), run_time=1.0)
+
+        # Status bar
+        status = LayoutManager.create_status_bar("Setting up the coordinate system")
+        self.play(FadeIn(status, shift=DOWN), run_time=1.0)
+
+        # Hold for a moment
+        self.wait(2.0)
+
+        # Clean up for next scene
+        self.play(
+            FadeOut(VGroup(header, axes, axes_labels, status), shift=DOWN),
+            run_time=1.0,
+        )
+
+    # --------------------------------------------------------------------
+    # Scene 2: Draw the eˣ curve
+    # --------------------------------------------------------------------
+    def scene2(self):
+        # Header
+        header = LayoutManager.create_header(
+            "Exponential Function eˣ", "Plotting the curve"
+        )
+        self.play(FadeIn(header, shift=UP), run_time=1.0)
+
+        # Axes again
+        axes = Axes(
+            x_range=[-3, 3, 1],
+            y_range=[0, 20, 5],
+            x_length=10,
+            y_length=6,
+        ).shift(DOWN * 0.5)
+        self.play(Create(axes), run_time=1.2)
+
+        # Status bar
+        status1 = LayoutManager.create_status_bar("Drawing the curve of eˣ")
+        self.play(FadeIn(status1, shift=DOWN), run_time=0.8)
+
+        # Plot eˣ
+        curve = axes.plot(lambda x: np.exp(x), color=RED)
+        self.play(Create(curve), run_time=2.5)
+
+        # Label the curve
+        label = Text("eˣ", color=RED, font_size=24).next_to(curve, UP, buff=0.3)
+        self.play(FadeIn(label, shift=UP), run_time=0.8)
+
+        self.wait(1.5)
+
+        # Clean up
+        self.play(
+            FadeOut(VGroup(header, axes, status1, curve, label), shift=DOWN),
+            run_time=1.0,
+        )
+
+    # --------------------------------------------------------------------
+    # Scene 3: Tangent at x = 0 (slope = 1)
+    # --------------------------------------------------------------------
+    def scene3(self):
+        # Header
+        header = LayoutManager.create_header(
+            "Exponential Function eˣ", "Tangent at x = 0"
+        )
+        self.play(FadeIn(header, shift=UP), run_time=1.0)
+
+        # Axes
+        axes = Axes(
+            x_range=[-3, 3, 1],
+            y_range=[0, 20, 5],
+            x_length=10,
+            y_length=6,
+        ).shift(DOWN * 0.5)
+        self.play(Create(axes), run_time=1.2)
+
+        # Curve
+        curve = axes.plot(lambda x: np.exp(x), color=RED)
+        self.play(Create(curve), run_time=1.5)
+
+        # Point at x=0
+        point = Dot(axes.c2p(0, 1), color=YELLOW, radius=0.08)
+        self.play(FadeIn(point, scale=0.5), run_time=0.8)
+
+        # Tangent line (slope = 1, passes through (0,1))
+        tangent = Line(
+            start=axes.c2p(-2, -1),
+            end=axes.c2p(2, 3),
+            color=GREEN,
+        )
+        self.play(Create(tangent), run_time=1.5)
+
+        # Status bar update
+        status1 = LayoutManager.create_status_bar("Point at (0, 1)")
+        self.play(FadeIn(status1, shift=DOWN), run_time=0.8)
+        status2 = LayoutManager.create_status_bar("Tangent line shows slope = 1")
+        self.play(
+            ReplacementTransform(status1, status2),
+            run_time=1.2,
+        )
+
+        self.wait(1.5)
+
+        # Clean up
+        self.play(
+            FadeOut(
+                VGroup(header, axes, curve, point, tangent, status2),
+                shift=DOWN,
+            ),
+            run_time=1.0,
+        )
+
+    # --------------------------------------------------------------------
+    # Scene 4: Limit definition (1 + 1/n)ⁿ → eˣ
+    # --------------------------------------------------------------------
+    def scene4(self):
+        # Header
+        header = LayoutManager.create_header(
+            "Exponential Function eˣ", "Limit definition"
+        )
+        self.play(FadeIn(header, shift=UP), run_time=1.0)
+
+        # Axes
+        axes = Axes(
+            x_range=[0, 5, 1],
+            y_range=[0, 20, 5],
+            x_length=10,
+            y_length=6,
+        ).shift(DOWN * 0.5)
+        self.play(Create(axes), run_time=1.2)
+
+        # Curve for eˣ (only for x in [0,5])
+        curve = axes.plot(lambda x: np.exp(x), color=RED)
+        self.play(Create(curve), run_time=1.5)
+
+        # Status bar
+        status = LayoutManager.create_status_bar(
+            "Showing (1 + 1/n)ⁿ approaching e"
+        )
+        self.play(FadeIn(status, shift=DOWN), run_time=0.8)
+
+        # Sequence of points for n = 1..5
+        points = VGroup()
+        for n in range(1, 6):
+            x_val = np.log(1 + 1 / n) * n  # approximate x where (1+1/n)^n = e^x
+            y_val = (1 + 1 / n) ** n
+            dot = Dot(axes.c2p(x_val, y_val), color=BLUE, radius=0.07)
+            points.add(dot)
+
+        # Animate points appearing one by one
+        for i, dot in enumerate(points):
+            self.play(FadeIn(dot, scale=0.5), run_time=0.8)
+            self.wait(0.4)
+
+        # Final status update
+        status2 = LayoutManager.create_status_bar(
+            "As n → ∞, (1 + 1/n)ⁿ → e"
+        )
+        self.play(
+            ReplacementTransform(status, status2),
+            run_time=1.2,
+        )
+
+        self.wait(2.0)
+
+        # Clean up everything
+        self.play(
+            FadeOut(
+                VGroup(header, axes, curve, points, status2),
+                shift=DOWN,
+            ),
+            run_time=1.0,
+        )
+
+    # --------------------------------------------------------------------
+    # Main construct calling each scene in order
+    # --------------------------------------------------------------------
+    def construct(self):
+        self.scene1()
+        self.scene2()
+        self.scene3()
+        self.scene4()
