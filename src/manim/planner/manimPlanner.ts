@@ -80,9 +80,16 @@ Generate the structured educational plan for Manim using these concrete values.`
       temperature: 0.2,
       max_tokens: 3000,
       response_format: {type: 'json_object'},
+      // @ts-ignore - Groq reasoning parameter for Qwen / reasoning models
+      reasoning_format: 'hidden',
     });
 
-    const raw = response.choices[0]?.message?.content ?? '';
+    let raw = response.choices[0]?.message?.content ?? '';
+    // Strip reasoning / think tags if emitted
+    raw = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    if (raw.startsWith('```')) {
+      raw = raw.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    }
     const parsed = JSON.parse(raw) as ManimEducationalPlan;
     if (!parsed.scenes || parsed.scenes.length === 0) {
       throw new Error('Educational plan has no scenes.');

@@ -1,6 +1,6 @@
 /**
  * Validates Python Manim code for syntax correctness, scene class definitions,
- * and security constraints before execution.
+ * timing constraints, layout safety, and security rules before execution.
  */
 import {writeFile, unlink} from 'node:fs/promises';
 import path from 'node:path';
@@ -23,7 +23,7 @@ export interface ValidationResult {
   sceneClassName: string;
 }
 
-export async function validateManimScript(code: string, expectedClass = 'EduVisionScene'): Promise<ValidationResult> {
+export async function validateManimScript(code: string, expectedClass = 'AutoTeach'): Promise<ValidationResult> {
   // 1. Basic non-empty check
   if (!code || code.trim().length < 50) {
     return {valid: false, error: 'Generated Manim script is empty or too short.', sceneClassName: expectedClass};
@@ -61,7 +61,26 @@ export async function validateManimScript(code: string, expectedClass = 'EduVisi
     };
   }
 
-  // 5. Python AST / Compilation syntax check
+  // 5. Static timing checks
+  const negativeWaitMatch = code.match(/self\.wait\(\s*(?:-[0-9.]+|0+(?:\.0+)?)\s*\)(?![0-9.])/);
+  if (negativeWaitMatch) {
+    return {
+      valid: false,
+      error: 'Invalid timing: self.wait() duration must be strictly positive (> 0).',
+      sceneClassName: detectedClassName,
+    };
+  }
+
+  const negativeRuntimeMatch = code.match(/run_time\s*=\s*(?:-[0-9.]+|0+(?:\.0+)?)(?![0-9.])/);
+  if (negativeRuntimeMatch) {
+    return {
+      valid: false,
+      error: 'Invalid timing: animation run_time must be strictly positive (> 0).',
+      sceneClassName: detectedClassName,
+    };
+  }
+
+  // 6. Python AST / Compilation syntax check
   const tempFile = path.join(os.tmpdir(), `validate_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.py`);
   try {
     await writeFile(tempFile, code, 'utf-8');

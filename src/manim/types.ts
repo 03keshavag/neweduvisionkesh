@@ -74,6 +74,8 @@ export interface ManimScriptResult {
   code: string;
   sceneClassName: string;
   plan: ManimEducationalPlan;
+  generationSource?: 'groq' | 'fallback';
+  isFallback?: boolean;
 }
 
 export interface ManimRenderOptions {

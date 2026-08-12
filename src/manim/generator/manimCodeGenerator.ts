@@ -1,103 +1,139 @@
 /**
- * Stage 2: Groq Manim Python Code Generator with Subject-Aware Deterministic Primitives.
- *
- * Enforces strict anti-overlap layout discipline, clean scene-to-scene transitions,
- * and exact per-scene audio-visual timing synchronization.
+ * Stage 2: Groq Manim Python Code Generator with 3Blue1Brown-inspired visual quality,
+ * dynamic API contract injection, zero-break generalization, and spatial zoning.
  */
 import {getGroqClient, DEFAULT_GROQ_MODEL} from '../../groq/groqClient';
 import type {ManimEducationalPlan, ManimScriptResult} from '../types';
 import {validateManimScript} from '../validator/manimValidator';
 import {getMockManimScript} from './mockManimScript';
 import {PYTHON_PRIMITIVES_CODE} from './pythonPrimitives';
+import {CUSTOM_API_CONTRACT} from './apiRegistry';
 
 const MAX_MANIM_RETRIES = 2;
 
-const MANIM_SYSTEM_PROMPT = `You are EduVision's master Manim Community Edition (v0.19+) Python animator (inspired by 3Blue1Brown).
+const MANIM_SYSTEM_PROMPT = `You are EduVision's master Manim Community Edition (v0.19+) Python animator, producing 3Blue1Brown-style educational visualizations for ANY scientific, mathematical, or algorithmic concept.
 Write a complete, working, bug-free Manim Community script that visually explains the requested topic.
 
 ================================================================================
-CRITICAL ANTI-OVERLAP & AUDIO-SYNCHRONIZATION RULES:
+3BLUE1BROWN VISUAL PHILOSOPHY & SPATIAL ZONING:
 ================================================================================
 
-1. EXACT PER-SCENE DURATION MATCHING (AUDIO SYNC):
-   - You will be given the EXACT measured Audio Duration for each scene (e.g. Scene 1 = 7.5s, Scene 2 = 9.2s).
-   - In Python, the sum of all self.play(..., run_time=X) and self.wait(Y) inside each Scene section MUST EQUAL that scene's Audio Duration (+/- 0.3s).
-   - Example: If Scene 1 Audio is 7.5s:
-     self.play(FadeIn(header), run_time=1.0)
-     self.play(Create(graph.get_group()), run_time=2.0)
-     self.play(Write(status1), run_time=1.5)
-     self.wait(3.0)  # 1.0 + 2.0 + 1.5 + 3.0 = 7.5s exact match!
-   - NEVER rush to the next scene before the current scene's narration duration is completed.
+1. SPATIAL ZONES ON 1920x1080 CANVAS (x in [-6.5, 6.5], y in [-3.6, 3.6]):
+   - TOP HEADER ZONE (y in [3.0, 3.5]): Short title & concept badge (LayoutManager.create_header).
+   - MAIN STAGE ZONE (y in [-1.6, 1.8], x in [-5.8, 5.8]): Centered, dominant interactive visual model.
+   - BOTTOM STATUS & EQUATION ZONE (y in [-3.4, -2.4]): Step explanations & formula badges (LayoutManager.create_status_bar, LayoutManager.create_equation_card).
+   - 100px Safe Margins: Never position elements against the frame edges.
 
-2. ZERO OVERLAPPING TEXTS & SHAPES:
-   - NEVER create new Text / Shapes over existing ones!
+2. ONE MAIN IDEA PER SCENE & CLEAN CANVAS TRANSITIONS:
+   - Introduce concepts sequentially. Never display all concepts at once.
+   - At the beginning of Scene 2, Scene 3, and Scene 4, ALWAYS clean the stage using:
+     self.clear_stage(preserve=header)
    - When updating the bottom status bar, ALWAYS use:
-     self.play(ReplacementTransform(status1, status2), run_time=1.2)
+     self.play(ReplacementTransform(status1, status2), run_time=1.0)
      or:
-     self.play(FadeOut(status1), FadeIn(status2), run_time=1.2)
-   - When changing equations or explanation cards, FadeOut the old ones before displaying new ones.
-   - At the transition between scenes (e.g. Scene 1 -> Scene 2), clean up temporary objects:
-     self.play(FadeOut(scene1_temp_group), run_time=0.8)
+     self.play(FadeOut(status1), FadeIn(status2), run_time=1.0)
 
-3. LAYOUT-FIRST SPATIAL ZONES (Screen bounds: x in [-7, 7], y in [-4, 4]):
-   - Top Header Zone (y in [3.0, 3.5]): LayoutManager.create_header(title, subtitle). ONLY ONE header on screen!
-   - Main Stage Zone (y in [-1.5, 1.8], x in [-5.8, 5.8]): Centered diagrams, graphs, arrays, or models.
-   - Status / Equation Band (y in [-3.5, -2.5]): LayoutManager.create_status_bar(text). ONLY ONE status bar on screen!
-   - Never place objects at the exact same coordinates. Use next_to(obj, DIRECTION, buff=0.2).
+3. UNIVERSAL VISUALIZATION STRATEGY (STANDARD MANIM + OPTIONAL HELPERS):
+   - Custom helper classes below are OPTIONAL conveniences.
+   - If a topic does NOT have a dedicated helper (e.g. Doppler Effect, Fourier Transform, Bayes Theorem, AVL Trees, Carnot Cycle, TCP Handshake, Chemical Reactions, Geometry), build the visual directly using STANDARD MANIM PRIMITIVES:
+     Scene, VGroup, Circle, Square, Rectangle, RoundedRectangle, Line, Arrow, DoubleArrow, CurvedArrow, Dot, Arc, Axes, NumberPlane, Text, SurroundingRectangle, Brace, etc.
+   - NEVER hallucinate non-existent methods on custom classes. Only use methods documented in the API Contract below.
 
-4. DETERMINISTIC VISUAL PRIMITIVES LIBRARY (Already available in scope):
-   - LayoutManager: create_header(title, sub), create_status_bar(text), safe_scale(mob)
-   - ArrayVisualizer(values, box_size=0.8, color=BLUE_D, font_size=22, show_indices=True)
-     Methods: .get_group(), .get_element(i), .get_box(i), .get_val_mob(i), .create_pointer(i, label, is_upper=False)
-   - LinkedListVisualizer(values) -> .get_group()
-   - TreeVisualizer(root_val, tree_dict) -> .get_group()
-   - GraphVisualizer(positions_dict, edge_pairs) -> .get_group(), .set_visited(name, color)
-   - KinematicsVisualizer.create_canvas(x_max=10, y_max=6) -> axes, ground
-   - MoleculeVisualizer.make_atom(symbol, color, radius), .make_bond(a1, a2)
-   - CircuitVisualizer.create_rc_circuit(voltage=12, resistance=4) -> VGroup
-   - MatrixVisualizer.create_matrix(matrix_vals) -> VGroup
+${CUSTOM_API_CONTRACT}
 
-5. NUMPY / MANIM ARRAY COMPARISON RULE:
-   - Never compare Manim point arrays using == or !=.
-   - Use np.allclose(line.get_start(), point) or np.linalg.norm(line.get_start() - point) < 0.01.
+4. ZERO OBJECT / LABEL / EQUATION OVERLAP:
+   - Labels must never collide with diagrams, arrows, vectors, or equations.
+   - Use standard Manim positioning: next_to(obj, direction, buff=0.25). (Always 'buff', NEVER 'buffer').
+   - Wrap complex groups in VGroup and position as a single unit.
 
-6. GRAPH ALGORITHMS EDGE MAPPING RULE:
-   - DO NOT search through edges by comparing coordinates.
-   - Use an explicit dictionary:
-     edge_lines = {}
-     edge_lines[("A", "B")] = Line(nodes["A"].get_center(), nodes["B"].get_center())
-     self.play(edge_lines[("A", "B")].animate.set_color(YELLOW))
+5. EXACT DURATION & TIMING SYNCHRONIZATION:
+   - Sum of all self.play(..., run_time=X) and self.wait(Y) inside each Scene section MUST EQUAL that scene's Audio Duration (+/- 0.3s).
+   - NEVER write subtraction expressions in wait: self.wait(total - (a + b)) is forbidden.
+   - ALWAYS use positive constant durations: self.wait(2.5). Every duration must be > 0.
 
-7. ANIMATION LIST & MOBJECT RULES:
-   - Do not call .animate on Python lists. Unpack instead: self.play(*[e.animate.set_color(YELLOW) for e in edge_list])
-   - Valid Manim animation functions: Create(obj), Write(obj), FadeIn(obj), GrowArrow(arrow), Transform(a, b), ReplacementTransform(a, b), Indicate(obj), Circumscribe(obj).
-   - Dynamic updates: ValueTracker and always_redraw(lambda: <constructor>).
+6. 3D COORDINATES ONLY:
+   - ALL points, positions, and shift vectors MUST BE 3-ELEMENT 3D ARRAYS: np.array([x, y, 0]) or vec3(x, y) or deg_to_vec(deg, length).
+   - NEVER create 2-element arrays like np.array([math.cos(...), math.sin(...)])!
 
-8. TEXT & MATH RULES:
+7. TEXT & MATH RULES:
    - NEVER use MathTex(...) or Tex(...) (LaTeX is not installed).
    - ALWAYS use Text() with Unicode characters for normal text, labels, and math formulas.
-   - Do NOT use external files, images, or fonts.
 
-9. OUTPUT FORMAT:
-   - Return ONLY executable Python code inside 'class AutoTeach(Scene):'.
-   - No markdown fences (\`\`\`python ... \`\`\`), no conversational commentary.`;
+8. RAW PYTHON OUTPUT:
+   - Start directly with:
+     class AutoTeach(Scene):
+         def construct(self):
+             self.camera.background_color = "#070b14"
+   - Output ONLY valid Python code. No markdown fences, no commentary.`;
+
+const REPAIR_SYSTEM_PROMPT = `You are an expert Python and Manim Community (v0.19+) debugger.
+Fix the specific error in the user's Python script.
+Return ONLY valid Python code inside 'class AutoTeach(Scene):'.
+All code must be directly inside construct(self).
+Ensure all expressions are complete, all vectors are 3D np.array([x, y, 0]), and all self.wait(duration) durations are strictly positive constants.
+Do NOT output reasoning, markdown fences, or conversational text.
+
+${CUSTOM_API_CONTRACT}`;
 
 function cleanPythonCode(raw: string): string {
   let code = raw.trim();
-  if (code.startsWith('```')) {
-    code = code.replace(/^```(?:python)?\s*\n?/i, '');
-    code = code.replace(/\n?```\s*$/i, '');
+
+  // 1. Strip reasoning / think tags if present
+  code = code.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+  // 2. Strip markdown code fences
+  if (code.includes('```')) {
+    const match = code.match(/```(?:python)?\s*([\s\S]*?)```/i);
+    if (match) {
+      code = match[1].trim();
+    } else {
+      code = code.replace(/^```(?:python)?\s*\n?/i, '');
+      code = code.replace(/\n?```\s*$/i, '');
+    }
   }
+
+  // 3. Strip any conversational preamble before Python code begins
+  const codeStartMatch = code.match(/(from manim import|import numpy|import math|class AutoTeach|class \w+\(Scene\):)/);
+  if (codeStartMatch && codeStartMatch.index !== undefined && codeStartMatch.index > 0) {
+    code = code.substring(codeStartMatch.index);
+  }
+
   return code.trim();
 }
 
 function assembleFullScript(userCode: string): string {
-  const cleaned = cleanPythonCode(userCode);
+  let cleaned = cleanPythonCode(userCode);
+  // Strip redundant re-imports from user code so SafeText is never overwritten
+  cleaned = cleaned.replace(/^\s*(?:from manim import \*|import numpy as np|import math)\s*\n?/gm, '').trim();
   let baseHeader = 'from manim import *\nimport numpy as np\nimport math\n';
   if (!cleaned.includes('class LayoutManager:') && !cleaned.includes('class ArrayVisualizer:')) {
     return `${baseHeader}\n${PYTHON_PRIMITIVES_CODE}\n\n${cleaned}`;
   }
   return `${baseHeader}\n${cleaned}`;
+}
+
+function extractCleanError(rawError: string): string {
+  const clean = rawError.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
+  const lines = clean.split('\n');
+  const relevant: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (
+      trimmed.includes('Error:') ||
+      trimmed.includes('SyntaxError') ||
+      trimmed.includes('NameError') ||
+      trimmed.includes('TypeError') ||
+      trimmed.includes('ValueError') ||
+      trimmed.includes('AttributeError') ||
+      trimmed.includes('Invalid timing') ||
+      trimmed.includes('line ') ||
+      trimmed.startsWith('self.')
+    ) {
+      relevant.push(trimmed);
+    }
+  }
+  return relevant.slice(-6).join('\n') || clean.slice(0, 300);
 }
 
 export async function generateManimScript(
@@ -108,7 +144,13 @@ export async function generateManimScript(
   if (!groq) {
     console.warn('[manimGenerator] GROQ_API_KEY not configured — using canonical Manim script.');
     const code = getMockManimScript(plan.topic);
-    return {code: assembleFullScript(code), sceneClassName: 'AutoTeach', plan};
+    return {
+      code: assembleFullScript(code),
+      sceneClassName: 'AutoTeach',
+      plan,
+      generationSource: 'fallback',
+      isFallback: true,
+    };
   }
 
   const domain = plan.domainAnalysis?.domain || plan.subject || 'General Science';
@@ -124,8 +166,8 @@ export async function generateManimScript(
 - Spoken Narration: "${s.narration}"
 - Visual Goal: ${s.visualObjective}
 - Key Entities: ${s.keyEntities?.join(', ') || 'Mathematical objects'}
-- REQUIRED MANIM RUNTIME: Sum of all self.play(..., run_time=X) and self.wait(Y) in Scene ${i + 1} MUST equal ${dur.toFixed(1)}s!
-- CLEANUP REQUIREMENT: At the end of this scene, fade out temporary labels/cards before Scene ${i + 2} starts.`;
+- REQUIRED RUNTIME: Sum of all self.play run_times + self.wait in this scene MUST equal ${dur.toFixed(1)}s!
+- CLEANUP: At start of this scene (if i > 0), call self.clear_stage(preserve=header) to clear previous scene shapes.`;
     })
     .join('\n\n');
 
@@ -138,14 +180,12 @@ ${exampleDataStr}
 
 LEARNING OBJECTIVE: ${plan.learningObjective}
 
-SCENE STRUCTURE & PRECISE TIMINGS:
+SCENE STRUCTURE & EXACT TIMINGS:
 ${scenesPrompt}
 
-Write the complete Python script inside 'class AutoTeach(Scene)'.
-CRITICAL:
-1. Ensure each Scene section's animation + wait timings EXACTLY match the specified Audio Duration.
-2. Clean up temporary objects between scenes so nothing overlaps.
-3. Use ReplacementTransform for status updates so text never stacks.`;
+Write the complete Python script inside 'class AutoTeach(Scene)' explaining '${plan.topic}'.
+Write all code directly inside 'def construct(self):'. Use self.clear_stage(preserve=header) between scenes so text and shapes never overlap.
+Ensure all mathematical expressions are complete and all self.wait() durations are positive constants.`;
 
   let currentCode = '';
   let lastError = '';
@@ -159,33 +199,32 @@ CRITICAL:
       if (attempt === 1) {
         messages.push({role: 'user', content: prompt});
       } else {
-        messages.push({role: 'user', content: prompt});
-        messages.push({role: 'assistant', content: currentCode});
         messages.push({
           role: 'user',
-          content: `Your previous Manim Python script failed validation with this error:
+          content: `${prompt}
+
+IMPORTANT CORRECTION FOR PREVIOUS ATTEMPT:
+Your previous code had this validation error:
 ${lastError}
 
-Fix the error and return the complete corrected Python code inside 'class AutoTeach(Scene)'.
-Remember:
-- Use Text(...) with Unicode instead of MathTex.
-- Never compare point arrays with ==.
-- Match each scene's total animation duration to its audio duration.
-- Fade out previous objects so texts and shapes never overlap.`,
+Fix this error and return the complete corrected Python code inside 'class AutoTeach(Scene):'.
+Ensure all mathematical expressions are complete (e.g. t_apex = v0y / g), all wait durations are positive constants, and all vectors are 3D np.array([x, y, 0]).`,
         });
       }
 
       const response = await groq.chat.completions.create({
         model: DEFAULT_GROQ_MODEL,
         messages,
-        temperature: 0.15,
+        temperature: 0.2,
         max_tokens: 4096,
+        // @ts-ignore - Groq reasoning parameter for Qwen / reasoning models
+        reasoning_format: 'hidden',
       });
 
       currentCode = cleanPythonCode(response.choices[0]?.message?.content ?? '');
       const fullScript = assembleFullScript(currentCode);
 
-      // Validate Python AST & API safety
+      // Validate Python AST, timing & API safety
       const validation = await validateManimScript(fullScript, 'AutoTeach');
       if (!validation.valid) {
         lastError = validation.error || 'Validation error';
@@ -197,6 +236,8 @@ Remember:
         code: fullScript,
         sceneClassName: validation.sceneClassName || 'AutoTeach',
         plan,
+        generationSource: 'groq',
+        isFallback: false,
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -211,6 +252,8 @@ Remember:
     code: assembleFullScript(fallback),
     sceneClassName: 'AutoTeach',
     plan,
+    generationSource: 'fallback',
+    isFallback: true,
   };
 }
 
@@ -225,10 +268,12 @@ export async function repairManimScript(
       code: assembleFullScript(getMockManimScript(plan.topic)),
       sceneClassName: 'AutoTeach',
       plan,
+      generationSource: 'fallback',
+      isFallback: true,
     };
   }
 
-  // Strip injected primitives to keep repair prompt well under token limits
+  // Strip injected primitives to keep repair prompt well under token limits (< 1200 tokens)
   let sceneOnlyCode = failedCode;
   const classIdx = sceneOnlyCode.indexOf('class AutoTeach');
   if (classIdx !== -1) {
@@ -240,32 +285,45 @@ export async function repairManimScript(
     }
   }
 
-  const prompt = `The following Manim Community Python script for topic "${plan.topic}" failed during rendering with this error:
+  const cleanErr = extractCleanError(runtimeError);
 
-RUNTIME ERROR:
-${runtimeError}
+  // Identify failure type for targeted instructions
+  let specificDirective = 'Fix the error so the script runs cleanly.';
+  if (cleanErr.includes('SyntaxError')) {
+    specificDirective = 'Fix incomplete mathematical statements (e.g. complete t_apex = v0y / g) or unclosed parentheses.';
+  } else if (cleanErr.includes('wait') || cleanErr.includes('Invalid timing') || cleanErr.includes('duration')) {
+    specificDirective = 'Fix timing: ensure all self.wait(...) calls use positive constant numbers (e.g. self.wait(2.0)). Never use negative values or complex subtraction.';
+  } else if (cleanErr.includes('broadcast') || cleanErr.includes('shape')) {
+    specificDirective = 'Fix coordinate vectors: ensure all vectors are 3D (np.array([x, y, 0])).';
+  } else if (cleanErr.includes('AttributeError')) {
+    specificDirective = 'Fix attribute error: write all animation code directly inside construct(self) using only real Manim or API contract methods.';
+  } else if (cleanErr.includes('NameError')) {
+    specificDirective = 'Fix undefined variable: define or import the required symbol.';
+  }
+
+  const prompt = `TOPIC: "${plan.topic}"
+
+ERROR:
+${cleanErr}
 
 FAILED SCRIPT:
 ${sceneOnlyCode}
 
-Fix the script so it renders cleanly. Remember:
-1. ONLY use Text(...) with Unicode symbols (never MathTex or Tex).
-2. Never compare point arrays using == or !=. Use np.allclose(...) or np.linalg.norm(...) < 0.01.
-3. For graph algorithms, use an explicit dictionary for edges (e.g. edge_lines[("A", "B")]).
-4. Do not call .animate on a list of Mobjects.
-5. ONLY use Create(obj), Write(obj), GrowArrow(arrow), Transform(a, b), ReplacementTransform(a, b), Indicate(obj).
-6. Clean up temporary scene elements and use ReplacementTransform for status bars to prevent overlapping objects.
-7. Return ONLY valid Python code inside 'class AutoTeach(Scene)'.`;
+INSTRUCTION:
+${specificDirective}
+Return ONLY the complete corrected Python code inside 'class AutoTeach(Scene):'.`;
 
   try {
     const response = await groq.chat.completions.create({
       model: DEFAULT_GROQ_MODEL,
       messages: [
-        {role: 'system', content: MANIM_SYSTEM_PROMPT},
+        {role: 'system', content: REPAIR_SYSTEM_PROMPT},
         {role: 'user', content: prompt},
       ],
-      temperature: 0.1,
+      temperature: 0.2,
       max_tokens: 4096,
+      // @ts-ignore - Groq reasoning parameter for Qwen / reasoning models
+      reasoning_format: 'hidden',
     });
 
     const repaired = cleanPythonCode(response.choices[0]?.message?.content ?? '');
@@ -279,6 +337,8 @@ Fix the script so it renders cleanly. Remember:
       code: fullRepaired,
       sceneClassName: validation.sceneClassName || 'AutoTeach',
       plan,
+      generationSource: 'groq',
+      isFallback: false,
     };
   } catch (err) {
     console.warn(`[manimGenerator] Automated repair failed (${err}). Falling back to canonical script.`);
@@ -286,6 +346,8 @@ Fix the script so it renders cleanly. Remember:
       code: assembleFullScript(getMockManimScript(plan.topic)),
       sceneClassName: 'AutoTeach',
       plan,
+      generationSource: 'fallback',
+      isFallback: true,
     };
   }
 }

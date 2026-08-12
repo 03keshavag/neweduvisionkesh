@@ -440,7 +440,55 @@ export function getMockManimScript(topic: string, sceneDurationSeconds: number =
 `);
   }
 
-  // 8. Physics / Optics: Mirror Properties & Law of Reflection
+  // 8. Physics / Optics: Concave Lens (Diverging Lens)
+  if (t.includes('concave') || t.includes('diverging') || (t.includes('lens') && !t.includes('convex'))) {
+    return wrapScript(`class AutoTeach(Scene):
+    def construct(self):
+        self.camera.background_color = "#070b14"
+
+        # 1. Header
+        header = LayoutManager.create_header("Concave (Diverging) Lens", "Parallel Incident Rays Diverge Away from Focus (F₁)")
+        self.play(FadeIn(header), run_time=1.2)
+
+        # 2. Lens & Optical Axis
+        lens_grp = OpticsVisualizer.create_concave_lens(height=4.5, focal_length=2.5)
+        self.play(Create(lens_grp[0]), Create(lens_grp[1]), run_time=1.5)
+        self.play(Create(lens_grp[2]), Create(lens_grp[3]), FadeIn(lens_grp[4]), Write(lens_grp[5]), FadeIn(lens_grp[6]), Write(lens_grp[7]), run_time=1.2)
+        self.wait(0.8)
+
+        # 3. Object Arrow on Left (at x = -4.0, height = 1.6)
+        obj_arrow = Arrow(np.array([-4.0, 0, 0]), np.array([-4.0, 1.6, 0]), color=GREEN, buff=0, stroke_width=4)
+        obj_lbl = Text("Object", font_size=16, color=GREEN).next_to(obj_arrow, LEFT, buff=0.1)
+        self.play(GrowArrow(obj_arrow), Write(obj_lbl), run_time=1.2)
+
+        # 4. Ray 1: Parallel to Principal Axis -> Refracts Diverging
+        r1_inc = Line(np.array([-4.0, 1.6, 0]), np.array([0, 1.6, 0]), color=YELLOW, stroke_width=3)
+        r1_div = Line(np.array([0, 1.6, 0]), np.array([3.5, 3.84, 0]), color=YELLOW, stroke_width=3)
+        r1_virt = DashedLine(np.array([0, 1.6, 0]), np.array([-2.5, 0, 0]), color=YELLOW_B, stroke_width=2)
+
+        status_r1 = LayoutManager.create_status_bar("Ray 1: Parallel ray refracts outward, appearing to come from focus F₁", color=YELLOW)
+        self.play(Create(r1_inc), Write(status_r1), run_time=1.5)
+        self.play(Create(r1_div), Create(r1_virt), run_time=1.5)
+        self.wait(0.8)
+
+        # 5. Ray 2: Passing through Optical Center (O) Undeviated
+        r2_line = Line(np.array([-4.0, 1.6, 0]), np.array([3.5, -1.4, 0]), color=ORANGE, stroke_width=3)
+        status_r2 = LayoutManager.create_status_bar("Ray 2: Ray through optical center O passes straight without deviation", color=ORANGE)
+        self.play(Create(r2_line), ReplacementTransform(status_r1, status_r2), run_time=1.5)
+
+        # 6. Virtual Image Formation (at intersection of virtual extensions)
+        # x_img = -1.54, y_img = 0.615
+        img_arrow = Arrow(np.array([-1.54, 0, 0]), np.array([-1.54, 0.62, 0]), color=BLUE_B, buff=0, stroke_width=4)
+        img_lbl = Text("Virtual Image", font_size=15, color=BLUE_B).next_to(img_arrow, UP, buff=0.1)
+
+        status_final = LayoutManager.create_status_bar("✓ Concave Lens Properties: Virtual, Erect, and Diminished Image", color=BLUE_B)
+        self.play(GrowArrow(img_arrow), Write(img_lbl), ReplacementTransform(status_r2, status_final), run_time=1.8)
+        self.play(Circumscribe(img_arrow, color=BLUE_B), run_time=1.5)
+        self.wait(2.0)
+`);
+  }
+
+  // 9. Physics / Optics: Mirror Properties & Law of Reflection
   if (t.includes('mirror') || t.includes('reflection') || t.includes('optics') || t.includes('refraction') || t.includes('light')) {
     return wrapScript(`class AutoTeach(Scene):
     def construct(self):
@@ -483,7 +531,151 @@ export function getMockManimScript(topic: string, sceneDurationSeconds: number =
 `);
   }
 
-  // 9. Default: Projectile Motion Kinematics (Physics Gold Standard)
+  // 10. Physics: Newton's Third Law of Motion (Action & Reaction)
+  if (t.includes('newton') || t.includes('third law') || t.includes('action') || t.includes('reaction')) {
+    return wrapScript(`class AutoTeach(Scene):
+    def construct(self):
+        self.camera.background_color = "#070b14"
+
+        # 1. Header
+        header = LayoutManager.create_header("Newton's Third Law of Motion", "For Every Action, There Is an Equal and Opposite Reaction (F_AB = -F_BA)")
+        self.play(FadeIn(header), run_time=1.2)
+
+        # 2. Two Interactive Objects (Rocket & Exhaust)
+        obj_a = RoundedRectangle(corner_radius=0.2, width=2.4, height=1.4, color=BLUE_B, fill_color="#0f172a", fill_opacity=0.9).shift(LEFT * 2.2)
+        lbl_a = Text("Object A (Rocket)", font_size=16, color=BLUE_B).move_to(obj_a.get_center())
+        grp_a = VGroup(obj_a, lbl_a)
+
+        obj_b = RoundedRectangle(corner_radius=0.2, width=2.4, height=1.4, color=ORANGE, fill_color="#0f172a", fill_opacity=0.9).shift(RIGHT * 2.2)
+        lbl_b = Text("Object B (Gas)", font_size=16, color=ORANGE).move_to(obj_b.get_center())
+        grp_b = VGroup(obj_b, lbl_b)
+
+        self.play(Create(grp_a), Create(grp_b), run_time=1.5)
+        self.wait(0.8)
+
+        # 3. Action Force on B (Rightward)
+        f_action = Arrow(obj_a.get_right(), obj_a.get_right() + RIGHT * 2.2, color=YELLOW, buff=0, stroke_width=4)
+        lbl_fa = Text("F(action) on B", font_size=15, color=YELLOW).next_to(f_action, UP, buff=0.1)
+        status_act = LayoutManager.create_status_bar("Action: Object A exerts forward force on Object B", color=YELLOW)
+        self.play(GrowArrow(f_action), Write(lbl_fa), Write(status_act), run_time=1.5)
+        self.wait(0.8)
+
+        # 4. Reaction Force on A (Leftward)
+        f_reaction = Arrow(obj_b.get_left(), obj_b.get_left() + LEFT * 2.2, color=RED_B, buff=0, stroke_width=4)
+        lbl_fr = Text("F(reaction) on A", font_size=15, color=RED_B).next_to(f_reaction, DOWN, buff=0.1)
+        status_react = LayoutManager.create_status_bar("Reaction: Object B simultaneously exerts equal & opposite force on A", color=RED_B)
+        self.play(GrowArrow(f_reaction), Write(lbl_fr), ReplacementTransform(status_act, status_react), run_time=1.5)
+        self.wait(1.0)
+
+        # 5. Governing Equation Card
+        eq_card = LayoutManager.create_equation_card("F_AB = - F_BA", label="Equal Magnitude, Opposite Direction").shift(DOWN * 1.6)
+        status_final = LayoutManager.create_status_bar("✓ Forces always occur in simultaneous, equal, and opposite pairs", color=GREEN_B)
+        self.play(FadeIn(eq_card), ReplacementTransform(status_react, status_final), run_time=1.5)
+        self.wait(2.0)
+`);
+  }
+
+  // 11. Mathematics: Pigeonhole Principle
+  if (t.includes('pigeonhole') || t.includes('dirichlet') || t.includes('combinatorics')) {
+    return wrapScript(`class AutoTeach(Scene):
+    def construct(self):
+        self.camera.background_color = "#070b14"
+
+        # 1. Header
+        header = LayoutManager.create_header("The Pigeonhole Principle", "If n items are put into m containers (n > m), at least one has ≥ 2 items")
+        self.play(FadeIn(header), run_time=1.2)
+
+        # 2. Draw 3 Holes (Containers)
+        holes = VGroup()
+        for i in range(3):
+            sq = Square(side_length=1.4, color=BLUE_B, fill_color="#0f172a", fill_opacity=0.85, stroke_width=2.5)
+            h_lbl = Text(f"Hole {i+1}", font_size=14, color=GRAY_B).next_to(sq, DOWN, buff=0.1)
+            holes.add(VGroup(sq, h_lbl))
+        holes.arrange(RIGHT, buff=1.2).shift(DOWN * 0.4)
+
+        self.play(FadeIn(holes), run_time=1.5)
+        self.wait(0.8)
+
+        # 3. Introduce 4 Pigeons
+        pigeons = VGroup()
+        for i in range(4):
+            c = Circle(radius=0.35, color=YELLOW, fill_color=YELLOW, fill_opacity=0.85, stroke_width=2)
+            p_lbl = Text(f"P{i+1}", font_size=16, color=BLACK).move_to(c.get_center())
+            pigeons.add(VGroup(c, p_lbl))
+        pigeons.arrange(RIGHT, buff=0.6).shift(UP * 1.8)
+
+        status_init = LayoutManager.create_status_bar("Setup: 4 Pigeons (n = 4) and 3 Holes (m = 3)", color=YELLOW)
+        self.play(FadeIn(pigeons), Write(status_init), run_time=1.5)
+        self.wait(0.8)
+
+        # 4. Place first 3 pigeons into distinct holes
+        status_fill = LayoutManager.create_status_bar("Step 1: Place first 3 pigeons into distinct holes (1 per hole)", color=BLUE_B)
+        self.play(
+            pigeons[0].animate.move_to(holes[0][0].get_center()),
+            pigeons[1].animate.move_to(holes[1][0].get_center()),
+            pigeons[2].animate.move_to(holes[2][0].get_center()),
+            ReplacementTransform(status_init, status_fill),
+            run_time=2.0
+        )
+        self.wait(0.8)
+
+        # 5. 4th Pigeon MUST share a hole (Collision)
+        status_collide = LayoutManager.create_status_bar("Step 2: 4th Pigeon must enter an occupied hole (Guaranteed Collision)", color=ORANGE)
+        self.play(
+            pigeons[3].animate.move_to(holes[1][0].get_center() + UP * 0.3),
+            pigeons[1].animate.shift(DOWN * 0.3),
+            ReplacementTransform(status_fill, status_collide),
+            run_time=2.0
+        )
+        self.play(Circumscribe(holes[1][0], color=RED_B), run_time=1.5)
+
+        # 6. Conclusion
+        status_final = LayoutManager.create_status_bar("✓ Pigeonhole Theorem Proven: At least one hole contains ≥ ⌈n/m⌉ = 2 items", color=GREEN_B)
+        self.play(ReplacementTransform(status_collide, status_final), run_time=1.5)
+        self.wait(2.0)
+`);
+  }
+
+  // 12. Biology & Chemistry: Photosynthesis / Chemical Reactions
+  if (t.includes('photosynthesis') || t.includes('chloroplast') || t.includes('reaction') || t.includes('chemistry') || t.includes('chemical')) {
+    return wrapScript(`class AutoTeach(Scene):
+    def construct(self):
+        self.camera.background_color = "#070b14"
+
+        # 1. Header
+        header = LayoutManager.create_header("Photosynthesis Chemical Reaction", "Converting Light Energy into Chemical Glucose: 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂")
+        self.play(FadeIn(header), run_time=1.2)
+
+        # 2. Chloroplast Organelle Visual (Green Stadium / Capsule)
+        chloroplast = RoundedRectangle(corner_radius=1.2, width=7.5, height=3.6, color=GREEN_B, fill_color="#064e3b", fill_opacity=0.35, stroke_width=3).shift(UP * 0.2)
+        chloro_lbl = Text("Chloroplast (Thylakoid Membrane)", font_size=16, color=GREEN_B).next_to(chloroplast, UP, buff=0.1)
+        self.play(Create(chloroplast), Write(chloro_lbl), run_time=1.5)
+        self.wait(0.8)
+
+        # 3. Inputs on Left: CO2 + H2O + Light
+        sun_light = Arrow(LEFT * 5.0 + UP * 1.5, LEFT * 2.5 + UP * 0.5, color=YELLOW, stroke_width=4)
+        light_lbl = Text("Sunlight (hv)", font_size=15, color=YELLOW).next_to(sun_light.get_start(), UP, buff=0.08)
+        reactants = Text("Inputs:\\n6 CO₂ (Carbon Dioxide)\\n+ 6 H₂O (Water)", font_size=16, color=BLUE_B).shift(LEFT * 2.2 + DOWN * 0.2)
+
+        status_in = LayoutManager.create_status_bar("Step 1: Light-dependent reactions absorb photons and split water molecules", color=YELLOW)
+        self.play(GrowArrow(sun_light), Write(light_lbl), FadeIn(reactants), Write(status_in), run_time=1.8)
+        self.wait(0.8)
+
+        # 4. Outputs on Right: Glucose (C6H12O6) + Oxygen (O2)
+        products = Text("Outputs:\\nC₆H₁₂O₆ (Glucose)\\n+ 6 O₂ (Oxygen Gas)", font_size=16, color=GREEN_B).shift(RIGHT * 2.2 + DOWN * 0.2)
+        status_out = LayoutManager.create_status_bar("Step 2: Calvin cycle fixes carbon into high-energy glucose sugar", color=GREEN_B)
+        self.play(FadeIn(products), ReplacementTransform(status_in, status_out), run_time=1.8)
+        self.wait(1.0)
+
+        # 5. Balanced Chemical Reaction Summary Card
+        rxn_card = BioChemVisualizer.create_chemical_reaction("6 CO₂ + 6 H₂O", "C₆H₁₂O₆ + 6 O₂", catalyst="Light & Chlorophyll").shift(DOWN * 2.1)
+        status_final = LayoutManager.create_status_bar("✓ Photosynthesis Equation: Solar energy is stored in chemical bonds", color=YELLOW)
+        self.play(FadeIn(rxn_card), ReplacementTransform(status_out, status_final), run_time=1.5)
+        self.wait(2.0)
+`);
+  }
+
+  // 13. Default: Projectile Motion Kinematics (Physics Gold Standard)
   return wrapScript(`class AutoTeach(Scene):
     def construct(self):
         self.camera.background_color = "#070b14"

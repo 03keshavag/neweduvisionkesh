@@ -40,6 +40,9 @@ export interface VideoResult {
   title: string;
   videoUrl: string;
   duration: number;
+  generationSource?: 'groq' | 'fallback';
+  isFallback?: boolean;
+  statusMessage?: string;
 }
 
 export async function generateVideo(options: GenerateVideoOptions): Promise<VideoResult> {
@@ -63,5 +66,8 @@ export async function generateVideo(options: GenerateVideoOptions): Promise<Vide
     title: result.title,
     videoUrl: result.videoUrl,
     duration: result.duration,
+    generationSource: result.generationSource,
+    isFallback: result.isFallback,
+    statusMessage: result.statusMessage,
   };
 }

@@ -10,7 +10,11 @@
  *     ↓
  *   Stage 2: Groq Manim Python Generator (timed to measured narration durations)
  *     ↓
+ *   Static Python AST & Timing Validation
+ *     ↓
  *   Manim Subprocess Render (isolated execution to MP4)
+ *     ↓
+ *   Targeted Groq Repair (if runtime render error occurs)
  *     ↓
  *   FFmpeg Audio/Video Mux (pads final frame if needed, attaches audio)
  *     ↓
@@ -43,6 +47,9 @@ export interface ManimPipelineResult {
   duration: number;
   scriptCode: string;
   plan: ManimEducationalPlan;
+  generationSource: 'groq' | 'fallback';
+  isFallback: boolean;
+  statusMessage: string;
 }
 
 export async function runManimPipeline(options: ManimPipelineOptions): Promise<ManimPipelineResult> {
@@ -99,12 +106,17 @@ export async function runManimPipeline(options: ManimPipelineOptions): Promise<M
   const scriptResult = await generateManimScript(plan, measuredDurations);
   onProgress('manim-script', 1);
 
-  // 4. Manim CLI Subprocess Render with automatic runtime error repair
+  // 4. Manim CLI Subprocess Render with targeted error repair
   onProgress('manim-render', 0);
   console.log(`[manimPipeline] Rendering Manim video...`);
   let renderResult;
   let activeCode = scriptResult.code;
   let activeClassName = scriptResult.sceneClassName;
+  let generationSource: 'groq' | 'fallback' = scriptResult.generationSource || 'groq';
+  let isFallback = scriptResult.isFallback ?? false;
+  let statusMessage = isFallback
+    ? 'Generated using fallback demonstration.'
+    : 'Topic-specific Manim generation succeeded.';
 
   try {
     renderResult = await renderManimScript(
@@ -120,11 +132,16 @@ export async function runManimPipeline(options: ManimPipelineOptions): Promise<M
     );
   } catch (renderErr: unknown) {
     const errorMsg = renderErr instanceof Error ? renderErr.message : String(renderErr);
-    console.warn(`[manimPipeline] Initial render failed (${errorMsg}). Attempting automated Groq repair...`);
+    console.warn(`[manimPipeline] Initial render failed. Attempting targeted Groq repair...`);
     try {
       const repaired = await repairManimScript(activeCode, errorMsg, plan);
       activeCode = repaired.code;
       activeClassName = repaired.sceneClassName;
+      generationSource = repaired.generationSource || 'groq';
+      isFallback = repaired.isFallback ?? false;
+      statusMessage = isFallback
+        ? 'Generated using fallback demonstration.'
+        : 'Topic-specific Manim generation succeeded after targeted repair.';
 
       renderResult = await renderManimScript(
         activeCode,
@@ -138,7 +155,11 @@ export async function runManimPipeline(options: ManimPipelineOptions): Promise<M
         (p) => onProgress('manim-render', 0.8 + p * 0.2),
       );
     } catch (repairErr: unknown) {
-      console.warn(`[manimPipeline] Repair render also failed (${repairErr}). Falling back to canonical script.`);
+      console.warn(`[manimPipeline] Topic-specific Manim generation failed (${repairErr}). Generated using fallback demonstration for: ${plan.topic}`);
+      generationSource = 'fallback';
+      isFallback = true;
+      statusMessage = 'Generated using fallback demonstration.';
+
       activeCode = getMockManimScript(plan.topic);
       activeClassName = 'AutoTeach';
       renderResult = await renderManimScript(
@@ -169,13 +190,16 @@ export async function runManimPipeline(options: ManimPipelineOptions): Promise<M
   });
   onProgress('mux', 1);
 
-  console.log(`\n[manimPipeline] SUCCESS: Produced ${finalVideoFileName} (${muxResult.duration.toFixed(1)}s)\n`);
+  console.log(`\n[manimPipeline] ${statusMessage.toUpperCase()}: Produced ${finalVideoFileName} (${muxResult.duration.toFixed(1)}s, source=${generationSource})\n`);
 
   return {
     title: plan.title,
     videoUrl: `/output/videos/${finalVideoFileName}`,
     duration: muxResult.duration,
-    scriptCode: scriptResult.code,
+    scriptCode: activeCode,
     plan,
+    generationSource,
+    isFallback,
+    statusMessage,
   };
 }
